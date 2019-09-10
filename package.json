@@ -3,7 +3,8 @@
     "dev": "next",
     "build": "next build",
     "start": "next start",
-    "export": "next build && next export -o dist"
+    "export": "next build && next export -o dist",
+    "test": "echo `No tests avaiable currently."
   },
   "dependencies": {
     "next": "^9.0.5",
