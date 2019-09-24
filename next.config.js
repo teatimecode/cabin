@@ -3,6 +3,8 @@ const path = require('path');
 
 module.exports = {
   cssModules: true,
+  // for github pages deployment
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/{cabin}' : '',
 
   // custom webpack config
   webpack: function(config) {
