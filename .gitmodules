@@ -1,0 +1,4 @@
+[submodule "gh-pages"]
+	path = gh-pages
+	url = teatime.github:teatimecode/cabin.git
+	branch = gh-pages
