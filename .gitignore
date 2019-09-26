@@ -98,4 +98,4 @@ typings/
 
 
 # Custom ignore folders
-dist/
+gh-pages/
