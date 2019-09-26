@@ -1,7 +1,8 @@
+import React from 'react';
 import { ThemeProvider } from "styled-components";
 import { AppBar, LogoIcon, Toolbar,  } from 'react95';
 
-import ShortCutContainer from 'app/components/window/ShortCutContainer';
+import ShortCutContainer from 'scripts/app/components/container/ShortCutContainer';
 import TaskBar from './TaskBar';
 
 
