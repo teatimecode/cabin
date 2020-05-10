@@ -28,8 +28,8 @@
 import React from "react";
 import { createGlobalStyle } from "styled-components";
 import { reset } from "react95";
-import Desktop from 'scripts/app/desktop';
-import MainConfig from 'scripts/app/config/main';
+import DesktopApp from 'scripts/app/desktop';
+import { MainConfigContext, default as MainConfig }  from 'scripts/app/config/main';
 
 const ResetStyles = createGlobalStyle`
   ${reset}
@@ -46,5 +46,7 @@ const FullScreenStyle = {
 export default props =>
   <div className="App" style={FullScreenStyle}>
     <ResetStyles />
-    <Desktop config={MainConfig}/>
+    <MainConfigContext.Provider value={MainConfig}>
+      <DesktopApp />
+    </MainConfigContext.Provider>
   </div>

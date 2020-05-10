@@ -1,3 +1,4 @@
+import React from 'react';
 import { themes } from 'react95';
 
 
@@ -13,5 +14,6 @@ const MainConfig = {
 
 }
 
+export const MainConfigContext = React.createContext(MainConfig);
 
 export default MainConfig;
