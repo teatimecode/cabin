@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { ThemeProvider } from "styled-components";
-import { AppBar } from 'react95';
 
 import ShortCutContainer from 'app/components/window/ShortCutContainer';
 import WindowManager from 'app/components/window/WindowManager';
@@ -12,7 +11,7 @@ const DesktopWrapper = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 28px;
   overflow: hidden;
 `;
 
@@ -41,14 +40,12 @@ class Desktop extends React.Component {
           <WindowManager
             ref={this.setWindowManagerRef}
           />
-
           <ShortCutContainer
             apps={config.apps}
             onOpenApp={this.handleOpenApp}
           />
-
-          <TaskBar config={config} />
         </DesktopWrapper>
+        <TaskBar config={config} />
       </ThemeProvider>
     )
   };

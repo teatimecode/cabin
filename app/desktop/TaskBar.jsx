@@ -1,19 +1,19 @@
 import React from 'react';
 import styled from 'styled-components';
 import {
-  AppBar, Toolbar, Button, List, ListItem, Divider
+  AppBar, Toolbar, Button, MenuList, MenuListItem, Divider
 } from 'react95';
 
-const StartMenuWrapper = styled.div`
+const MenuWrapper = styled.div`
   position: relative;
-  display: inline-block;
 `;
 
-const MenuList = styled(List)`
+const DropdownMenu = styled(MenuList)`
   position: absolute;
   bottom: 100%;
   left: 0;
   min-width: 150px;
+  margin-bottom: 2px;
 `;
 
 /*
@@ -24,37 +24,35 @@ class StartMenu extends React.PureComponent {
     open: false
   };
 
-  setOpen = (flag) => {
-    this.setState({
-      open: flag
-    });
-  }
-
   handleClick = () => {
-    this.setOpen(!this.state.open);
+    this.setState(prev => ({ open: !prev.open }));
   }
 
   handleClose = () => {
-    this.setOpen(false);
+    this.setState({ open: false });
   }
 
   render() {
     const { open } = this.state;
 
     return (
-      <StartMenuWrapper>
-        <Button onClick={this.handleClick} active={open} style={{ fontWeight: 'bold' }}>
+      <MenuWrapper>
+        <Button 
+          onClick={this.handleClick} 
+          active={open} 
+          style={{ fontWeight: 'bold' }}
+        >
           Start
         </Button>
         {open && (
-          <MenuList onClick={this.handleClose}>
-            <ListItem>Profile</ListItem>
-            <ListItem>My account</ListItem>
+          <DropdownMenu onClick={this.handleClose}>
+            <MenuListItem>Profile</MenuListItem>
+            <MenuListItem>My account</MenuListItem>
             <Divider />
-            <ListItem disabled>Logout</ListItem>
-          </MenuList>
+            <MenuListItem disabled>Logout</MenuListItem>
+          </DropdownMenu>
         )}
-      </StartMenuWrapper>
+      </MenuWrapper>
     );
   }
 }
@@ -62,30 +60,21 @@ class StartMenu extends React.PureComponent {
 /*
   右侧信息栏
  */
-const TaskBarInfo = () => {
-  return (
-    <div style={{ marginRight: '10px' }}>TeaTimeCode</div>
-  );
-}
-
+const TaskBarInfo = styled.div`
+  padding: 0 8px;
+`;
 
 /*
   任务栏
  */
 const TaskBar = ({ config }) => {
-  const { taskBarPosition } = config;
-
   return (
-    <AppBar style={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}>
-      <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
-
+    <AppBar position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
+      <Toolbar style={{ justifyContent: 'space-between' }}>
         <StartMenu />
-
-        <TaskBarInfo />
-
+        <TaskBarInfo>TeaTimeCode</TaskBarInfo>
       </Toolbar>
     </AppBar>
-
   )
 };
 
