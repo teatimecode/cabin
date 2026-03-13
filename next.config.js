@@ -1,7 +1,12 @@
 // next.config.js
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+
 const nextConfig = {
   output: 'export',
   trailingSlash: true,
+  
+  // GitHub Pages 需要配置 basePath
+  basePath: isGitHubPages ? '/cabin' : '',
   
   // React95 需要设置为 false 以避免 SSR 问题
   reactStrictMode: false,
