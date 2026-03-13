@@ -68,11 +68,13 @@ const FileSystem = {
     type: 'folder',
     name: '我的电脑',
     children: ['c-drive', 'd-drive'],
+    icon: 'my-computer',
   },
   '/my-computer/c-drive': {
     type: 'folder',
     name: 'C:',
     children: ['windows', 'program-files', 'users'],
+    icon: 'my-computer',
   },
   '/my-computer/c-drive/windows': {
     type: 'folder',
@@ -118,11 +120,13 @@ const FileSystem = {
     type: 'folder',
     name: 'D:',
     children: [],
+    icon: 'my-computer',
   },
   '/recycle-bin': {
     type: 'folder',
     name: '回收站',
     children: [],
+    icon: 'recycle-bin',
   },
 };
 
@@ -147,20 +151,23 @@ class WindowManager extends React.PureComponent {
   openWindow = (app) => {
     const { windows, nextZIndex } = this.state;
 
-    // 检查窗口是否已经打开
-    const existingWindow = windows.find(w => w.appId === app.id);
-    if (existingWindow) {
-      this.focusWindow(existingWindow.id);
-      return;
+    // 检查窗口是否已经打开（对于文件夹类型的窗口，允许打开多个）
+    if (app.type !== AppType.FOLDER && app.type !== AppType.EXPLORER) {
+      const existingWindow = windows.find(w => w.appId === app.id);
+      if (existingWindow) {
+        this.focusWindow(existingWindow.id);
+        return;
+      }
     }
 
     // 创建新窗口
     const newWindow = {
-      id: `window-${Date.now()}`,
+      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       appId: app.id,
       title: app.name,
       app: app,
       path: app.path || '/',  // 文件浏览器路径
+      icon: app.iconName || 'folder',
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,
@@ -257,6 +264,28 @@ class WindowManager extends React.PureComponent {
   handleOpenFile = (file) => {
     const { windows, nextZIndex } = this.state;
 
+    // 如果是文件夹，打开新的文件浏览器窗口
+    if (file.type === 'folder') {
+      const newWindow = {
+        id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        appId: `folder-${file.path}`,
+        title: file.name,
+        app: { id: 'explorer', name: file.name, type: AppType.EXPLORER, iconName: file.icon || 'folder' },
+        path: file.path,
+        icon: file.icon || 'folder',
+        zIndex: nextZIndex,
+        isMinimized: false,
+        isMaximized: false,
+      };
+
+      this.setState({
+        windows: [...windows, newWindow],
+        activeWindowId: newWindow.id,
+        nextZIndex: nextZIndex + 1,
+      });
+      return;
+    }
+
     // 查找是否已有该文件的窗口
     const existingWindow = windows.find(w => w.appId === 'notepad' && w.fileId === file.postId);
     if (existingWindow) {
@@ -269,12 +298,13 @@ class WindowManager extends React.PureComponent {
 
     // 打开记事本窗口
     const newWindow = {
-      id: `window-${Date.now()}`,
+      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       appId: 'notepad',
       fileId: file.postId,
       title: file.name,
-      app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD },
+      app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD, iconName: 'notepad' },
       content: content,
+      icon: 'notepad',
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,
@@ -285,6 +315,14 @@ class WindowManager extends React.PureComponent {
       activeWindowId: newWindow.id,
       nextZIndex: nextZIndex + 1,
     });
+  };
+
+  // 关闭当前窗口（供 TextEditor 使用）
+  handleClose = () => {
+    const { activeWindowId } = this.state;
+    if (activeWindowId) {
+      this.closeWindow(activeWindowId);
+    }
   };
 
   getWindowContent = (window) => {
@@ -306,6 +344,7 @@ class WindowManager extends React.PureComponent {
             content={content || ''}
             fileName={title || '无标题'}
             showStatusBar={true}
+            onClose={this.handleClose}
           />
         );
       default:

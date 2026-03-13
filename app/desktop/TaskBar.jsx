@@ -34,6 +34,9 @@ const WindowButton = styled(Button)`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const WindowButtonsContainer = styled.div`
@@ -204,7 +207,10 @@ class TaskBar extends React.PureComponent {
                   active={activeWindowId === window.id && !window.isMinimized}
                   onClick={() => this.handleWindowClick(window)}
                 >
-                  {window.title}
+                  {getIcon(window.icon || 'folder', { size: 'small' })}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {window.title}
+                  </span>
                 </WindowButton>
               ))}
             </WindowButtonsContainer>

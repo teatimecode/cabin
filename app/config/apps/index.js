@@ -34,7 +34,7 @@ export default [
     name: '我的电脑',
     type: AppType.EXPLORER,
     iconName: 'my-computer',
-    path: '/',
+    path: '/my-computer',
   },
   {
     id: 'notepad',
