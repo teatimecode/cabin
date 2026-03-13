@@ -61,20 +61,21 @@ class AppIcon extends React.PureComponent {
     const { app, selected } = this.props;
 
     // 获取图标，如果没有指定则根据类型使用默认图标
+    // 桌面图标使用大尺寸 (32x32)
     const renderIcon = () => {
       if (app.iconName) {
-        return getIcon(app.iconName);
+        return getIcon(app.iconName, { size: 'large' });
       }
       
       // 根据应用类型返回默认图标
       switch (app.type) {
         case 'folder':
         case 'explorer':
-          return getIcon('folder');
+          return getIcon('folder', { size: 'large' });
         case 'notepad':
-          return getIcon('notepad');
+          return getIcon('notepad', { size: 'large' });
         default:
-          return getIcon('document');
+          return getIcon('document', { size: 'large' });
       }
     };
 

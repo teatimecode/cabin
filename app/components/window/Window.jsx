@@ -5,6 +5,7 @@ import { Window as R95Window, WindowHeader, WindowContent, Button } from 'react9
 const WindowWrapper = styled.div`
   position: absolute;
   user-select: none;
+  display: ${props => props.$isMinimized ? 'none' : 'block'};
 `;
 
 const TitleText = styled.span`
@@ -59,6 +60,8 @@ class Window extends React.PureComponent {
   state = {
     position: { x: 50, y: 50 },
     size: { width: 600, height: 400 },
+    restorePosition: null,
+    restoreSize: null,
     isDragging: false,
     isResizing: false,
     dragOffset: { x: 0, y: 0 },
@@ -83,8 +86,11 @@ class Window extends React.PureComponent {
   }
 
   handleMouseDown = (e) => {
-    const { onFocus } = this.props;
+    const { onFocus, window } = this.props;
     if (onFocus) onFocus();
+
+    // 如果窗口已最大化，不允许拖动
+    if (window.isMaximized) return;
 
     // 检查是否点击的是标题栏（非按钮区域）
     if (e.target.closest('.title-bar') && !e.target.closest('button')) {
@@ -123,6 +129,10 @@ class Window extends React.PureComponent {
     e.preventDefault();
     e.stopPropagation();
     
+    const { window } = this.props;
+    // 如果窗口已最大化，不允许调整大小
+    if (window.isMaximized) return;
+
     const { size } = this.state;
     this.setState({
       isResizing: true,
@@ -177,19 +187,40 @@ class Window extends React.PureComponent {
     if (onMaximize) onMaximize(window.id);
   };
 
+  // 双击标题栏最大化/还原
+  handleTitleDoubleClick = () => {
+    this.handleMaximize();
+  };
+
   render() {
     const { window, children, isActive } = this.props;
     const { position, size } = this.state;
+    const { isMinimized, isMaximized } = window;
+
+    // 计算窗口位置和大小
+    let windowStyle = {
+      left: position.x,
+      top: position.y,
+      width: size.width,
+      height: size.height,
+      zIndex: window.zIndex || 1,
+    };
+
+    // 最大化时占满整个桌面区域（不包括任务栏）
+    if (isMaximized) {
+      windowStyle = {
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: window.zIndex || 1,
+      };
+    }
 
     return (
       <WindowWrapper
-        style={{
-          left: position.x,
-          top: position.y,
-          width: size.width,
-          height: size.height,
-          zIndex: window.zIndex || 1,
-        }}
+        $isMinimized={isMinimized}
+        style={windowStyle}
       >
         <R95Window
           style={{
@@ -202,13 +233,16 @@ class Window extends React.PureComponent {
           <WindowHeader
             className="title-bar"
             onMouseDown={this.handleMouseDown}
+            onDoubleClick={this.handleTitleDoubleClick}
             active={isActive}
             style={{ display: 'flex', alignItems: 'center' }}
           >
             <TitleText>{window.title}</TitleText>
             <ButtonGroup>
               <Button size="sm" square onClick={this.handleMinimize}>_</Button>
-              <Button size="sm" square onClick={this.handleMaximize}>□</Button>
+              <Button size="sm" square onClick={this.handleMaximize}>
+                {isMaximized ? '❐' : '□'}
+              </Button>
               <Button size="sm" square onClick={this.handleClose}>×</Button>
             </ButtonGroup>
           </WindowHeader>
@@ -216,10 +250,12 @@ class Window extends React.PureComponent {
             {children}
           </WindowContent>
         </R95Window>
-        <ResizeHandle
-          ref={this.resizeHandleRef}
-          onMouseDown={this.handleResizeStart}
-        />
+        {!isMaximized && (
+          <ResizeHandle
+            ref={this.resizeHandleRef}
+            onMouseDown={this.handleResizeStart}
+          />
+        )}
       </WindowWrapper>
     );
   }

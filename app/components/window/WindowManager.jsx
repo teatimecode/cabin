@@ -230,6 +230,30 @@ class WindowManager extends React.PureComponent {
     this.setState({ windows: newWindows });
   };
 
+  // 恢复窗口（从最小化状态）
+  restoreWindow = (windowId) => {
+    const { windows, nextZIndex } = this.state;
+    const newWindows = windows.map(w =>
+      w.id === windowId ? { ...w, isMinimized: false, zIndex: nextZIndex } : w
+    );
+
+    this.setState({
+      windows: newWindows,
+      activeWindowId: windowId,
+      nextZIndex: nextZIndex + 1,
+    });
+  };
+
+  // 获取窗口列表（供任务栏使用）
+  getWindows = () => {
+    return this.state.windows;
+  };
+
+  // 获取活动窗口ID
+  getActiveWindowId = () => {
+    return this.state.activeWindowId;
+  };
+
   handleOpenFile = (file) => {
     const { windows, nextZIndex } = this.state;
 

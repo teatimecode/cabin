@@ -33,6 +33,7 @@ class Desktop extends React.Component {
 
   render() {
     const { config } = this.props;
+    const { windowManagerRef } = this.state;
 
     return (
       <ThemeProvider theme={config.theme}>
@@ -45,7 +46,10 @@ class Desktop extends React.Component {
             onOpenApp={this.handleOpenApp}
           />
         </DesktopWrapper>
-        <TaskBar config={config} />
+        <TaskBar 
+          config={config} 
+          windowManager={windowManagerRef}
+        />
       </ThemeProvider>
     )
   };

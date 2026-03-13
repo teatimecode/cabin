@@ -13,6 +13,7 @@ import {
   PowerOff,
   Explorer100,
   User,
+  User1,
   FileText,
   Gcdef100,
 } from '@react95/icons';
@@ -34,6 +35,7 @@ export const IconMap = {
   'recycle-bin-full': RecycleFull,
   'explorer': Explorer100,
   'user': User,
+  'windows': User1, // Windows 图标
   // 开始菜单图标
   'startup': Explorer100,
   'documents': FileText,
@@ -43,13 +45,19 @@ export const IconMap = {
 };
 
 // 获取图标组件
+// size: 'large' (32x32) 或 'small' (16x16)
 export function getIcon(iconName, props = {}) {
   const IconComponent = IconMap[iconName];
+  
+  // 根据 size 参数设置 variant
+  const variant = props.size === 'large' ? '32x32_4' : '16x16_4';
+  const { size, ...restProps } = props;
+  
   if (IconComponent) {
-    return <IconComponent {...props} />;
+    return <IconComponent variant={variant} {...restProps} />;
   }
   // 默认返回文档图标
-  return <FileText {...props} />;
+  return <FileText variant={variant} {...restProps} />;
 }
 
 export default IconMap;

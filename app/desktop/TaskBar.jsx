@@ -22,11 +22,26 @@ const StartButton = styled(Button)`
   font-weight: bold;
   font-size: 12px;
   padding: 0 6px;
-  
-  &::before {
-    content: '🪟';
-    margin-right: 4px;
-  }
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const WindowButton = styled(Button)`
+  font-size: 11px;
+  padding: 0 8px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const WindowButtonsContainer = styled.div`
+  display: flex;
+  flex: 1;
+  margin-left: 4px;
+  gap: 2px;
+  overflow: hidden;
 `;
 
 const ClockArea = styled(ScrollView)`
@@ -68,6 +83,7 @@ class StartMenu extends React.PureComponent {
           onClick={this.handleClick} 
           active={open}
         >
+          {getIcon('windows', { size: 'small' })}
           开始
         </StartButton>
         {open && (
@@ -135,18 +151,72 @@ class Clock extends React.PureComponent {
 /*
   任务栏
 */
-const TaskBar = ({ config }) => {
-  return (
-    <AppBar position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
-      <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
-        <StartMenu />
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <DividerLine />
-          <Clock />
-        </div>
-      </Toolbar>
-    </AppBar>
-  )
-};
+class TaskBar extends React.PureComponent {
+  state = {
+    windows: [],
+    activeWindowId: null,
+  };
+
+  componentDidMount() {
+    // 定期从 WindowManager 获取窗口状态
+    this.updateInterval = setInterval(() => {
+      const { windowManager } = this.props;
+      if (windowManager) {
+        const windows = windowManager.getWindows();
+        const activeWindowId = windowManager.getActiveWindowId();
+        this.setState({ windows, activeWindowId });
+      }
+    }, 100);
+  }
+
+  componentWillUnmount() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+    }
+  }
+
+  handleWindowClick = (window) => {
+    const { windowManager } = this.props;
+    if (windowManager) {
+      if (window.isMinimized) {
+        // 如果窗口已最小化，恢复它
+        windowManager.restoreWindow(window.id);
+      } else {
+        // 否则聚焦窗口
+        windowManager.focusWindow(window.id);
+      }
+    }
+  };
+
+  render() {
+    const { config } = this.props;
+    const { windows, activeWindowId } = this.state;
+
+    return (
+      <AppBar position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
+        <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+            <StartMenu />
+            <WindowButtonsContainer>
+              {windows.map(window => (
+                <WindowButton
+                  key={window.id}
+                  active={activeWindowId === window.id && !window.isMinimized}
+                  onClick={() => this.handleWindowClick(window)}
+                >
+                  {window.title}
+                </WindowButton>
+              ))}
+            </WindowButtonsContainer>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <DividerLine />
+            <Clock />
+          </div>
+        </Toolbar>
+      </AppBar>
+    );
+  }
+}
 
 export default TaskBar;
