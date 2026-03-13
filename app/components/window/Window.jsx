@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Window as R95Window, TitleBar, Button } from 'react95';
+import { Window as R95Window, WindowHeader, Button } from 'react95';
 
 const WindowWrapper = styled.div`
   position: absolute;
@@ -89,18 +89,18 @@ class Window extends React.PureComponent {
             flexDirection: 'column',
           }}
         >
-          <TitleBar
+          <WindowHeader
             className="title-bar"
             onMouseDown={this.handleMouseDown}
             active={isActive}
           >
-            <TitleBar.Title>{window.title}</TitleBar.Title>
-            <TitleBar.Controls>
-              <Button onClick={this.handleMinimize} >─</Button>
-              <Button onClick={this.handleMaximize}>□</Button>
-              <Button onClick={this.handleClose}>×</Button>
-            </TitleBar.Controls>
-          </TitleBar>
+            <span style={{ flex: 1, padding: '2px 4px' }}>{window.title}</span>
+            <div style={{ display: 'flex', gap: '2px' }}>
+              <Button onClick={this.handleMinimize} style={{ minWidth: '20px', padding: '2px' }}>─</Button>
+              <Button onClick={this.handleMaximize} style={{ minWidth: '20px', padding: '2px' }}>□</Button>
+              <Button onClick={this.handleClose} style={{ minWidth: '20px', padding: '2px' }}>×</Button>
+            </div>
+          </WindowHeader>
           <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
             {children}
           </div>

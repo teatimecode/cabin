@@ -1,11 +1,11 @@
 import React from "react";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
-import { reset } from "react95";
+import { styleReset } from "react95";
 import Desktop from 'app/desktop';
 import MainConfig from 'app/config/main';
 
 const ResetStyles = createGlobalStyle`
-  ${reset}
+  ${styleReset}
 `;
 
 const FullScreenStyle = {

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, Menu, MenuItem, Divider } from 'react95';
+import { Button, MenuList, MenuListItem, Divider } from 'react95';
 import MarkdownRenderer from './MarkdownRenderer';
 
 const Container = styled.div`
@@ -149,8 +149,7 @@ class TextEditor extends React.PureComponent {
               {menu.name}
             </MenuButton>
             {menuOpen === menu.name && (
-              <Menu
-                open
+              <MenuList
                 style={{
                   position: 'absolute',
                   top: '100%',
@@ -166,15 +165,15 @@ class TextEditor extends React.PureComponent {
                     return <Divider key={index} />;
                   }
                   return (
-                    <MenuItem
+                    <MenuListItem
                       key={index}
                       onClick={() => this.handleMenuItemClick(item.action)}
                     >
                       {item.label}
-                    </MenuItem>
+                    </MenuListItem>
                   );
                 })}
-              </Menu>
+              </MenuList>
             )}
           </div>
         ))}
