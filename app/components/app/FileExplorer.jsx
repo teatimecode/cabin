@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, Cutout } from 'react95';
+import { Button, ScrollView } from 'react95';
 import { getIcon } from '../icons';
 
 const Container = styled.div`
@@ -24,7 +24,7 @@ const ToolbarButton = styled(Button)`
   font-size: 12px;
 `;
 
-const AddressBar = styled(Cutout)`
+const AddressBar = styled(ScrollView)`
   display: flex;
   align-items: center;
   padding: 4px 8px;

@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import {
-  AppBar, Toolbar, Button, MenuList, MenuListItem, Divider
+  AppBar, Toolbar, Button, MenuList, MenuListItem, Separator
 } from 'react95';
-import { Cutout } from 'react95';
+import { ScrollView } from 'react95';
 import { getIcon } from '../components/icons';
 
 const MenuWrapper = styled.div`
@@ -29,7 +29,7 @@ const StartButton = styled(Button)`
   }
 `;
 
-const ClockArea = styled(Cutout)`
+const ClockArea = styled(ScrollView)`
   padding: 2px 8px;
   background: #c0c0c0;
   font-size: 11px;
@@ -84,12 +84,12 @@ class StartMenu extends React.PureComponent {
               <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('settings')}</span>
               设置
             </MenuListItem>
-            <Divider />
+            <Separator />
             <MenuListItem>
               <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
               帮助
             </MenuListItem>
-            <Divider />
+            <Separator />
             <MenuListItem>
               <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('shutdown')}</span>
               关机

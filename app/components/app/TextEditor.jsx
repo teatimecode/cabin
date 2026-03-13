@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { MenuList, MenuListItem, Divider } from 'react95';
-import { Cutout } from 'react95';
+import { MenuList, MenuListItem, Separator, ScrollView } from 'react95';
 import MarkdownRenderer from './MarkdownRenderer';
 
 const Container = styled.div`
@@ -49,7 +48,7 @@ const EditorArea = styled.div`
   border-top: 1px solid #808080;
 `;
 
-const EditorContent = styled(Cutout)`
+const EditorContent = styled(ScrollView)`
   flex: 1;
   margin: 4px;
   background: #fff;
@@ -170,7 +169,7 @@ class TextEditor extends React.PureComponent {
               >
                 {menu.items.map((item, index) => {
                   if (item.type === 'divider') {
-                    return <Divider key={index} />;
+                    return <Separator key={index} />;
                   }
                   return (
                     <MenuListItem
