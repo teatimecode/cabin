@@ -23,6 +23,10 @@ class Desktop extends React.Component {
     }
   };
 
+  setWindowManagerRef = (ref) => {
+    this.setState({ windowManagerRef: ref });
+  };
+
   render() {
     const { config } = this.props;
 
@@ -31,7 +35,7 @@ class Desktop extends React.Component {
 
         <div style={{ ...DesktopStyles, background: config.background }}>
           <WindowManager
-            ref={(ref) => this.setState({ windowManagerRef: ref })}
+            ref={this.setWindowManagerRef}
           />
 
           <ShortCutContainer
