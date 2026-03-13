@@ -43,8 +43,9 @@ const DropdownMenu = styled(MenuList)`
 const MenuItem = styled(MenuListItem)`
   font-size: 12px;
   font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-  padding: 2px 8px;
-  height: auto;
+  padding: 0 8px;
+  height: 20px !important;
+  line-height: 20px !important;
   min-height: 20px;
 `;
 
