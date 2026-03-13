@@ -1,7 +1,9 @@
+import React from 'react';
 import { ThemeProvider } from "styled-components";
-import { AppBar, LogoIcon, Toolbar,  } from 'react95';
+import { AppBar } from 'react95';
 
 import ShortCutContainer from 'app/components/window/ShortCutContainer';
+import WindowManager from 'app/components/window/WindowManager';
 import TaskBar from './TaskBar';
 
 
@@ -9,23 +11,42 @@ const DesktopStyles = {
   height: '100%',
 }
 
-const Desktop = (props) => {
-  const { config } = props;
+class Desktop extends React.Component {
+  state = {
+    windowManagerRef: null,
+  };
 
-  return (
-    <ThemeProvider theme={config.theme}>
+  handleOpenApp = (app) => {
+    const { windowManagerRef } = this.state;
+    if (windowManagerRef) {
+      windowManagerRef.openWindow(app);
+    }
+  };
 
-      <div style={{ ...DesktopStyles, background: config.background }}>
+  render() {
+    const { config } = this.props;
 
-        <TaskBar config={config}/>
+    return (
+      <ThemeProvider theme={config.theme}>
 
-        <ShortCutContainer apps={config.apps} />
+        <div style={{ ...DesktopStyles, background: config.background }}>
+          <WindowManager
+            ref={(ref) => this.setState({ windowManagerRef: ref })}
+          />
 
-      </div>
+          <ShortCutContainer
+            apps={config.apps}
+            onOpenApp={this.handleOpenApp}
+          />
 
-    </ThemeProvider>
-  )
-};
+          <TaskBar config={config} />
+
+        </div>
+
+      </ThemeProvider>
+    )
+  };
+}
 
 
 export default Desktop;

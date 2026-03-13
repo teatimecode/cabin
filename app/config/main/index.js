@@ -1,5 +1,5 @@
 import { themes } from 'react95';
-
+import AppsConfig from '../apps';
 
 /*
   每一个Win95桌面应用有一个主的config，
@@ -7,10 +7,8 @@ import { themes } from 'react95';
 const MainConfig = {
   theme: themes.default,
   background: 'teal',
-  apps: [
-
-  ],
-
+  taskBarPosition: 'bottom',
+  apps: AppsConfig,
 }
 
 
