@@ -20,13 +20,67 @@ const ButtonGroup = styled.div`
   gap: 2px;
 `;
 
+const ResizeHandle = styled.div`
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 10;
+  
+  /* 像素风格的 resize 手柄 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(
+      135deg,
+      #808080 25%,
+      #c0c0c0 25%,
+      #c0c0c0 50%,
+      #808080 50%,
+      #808080 75%,
+      #c0c0c0 75%
+    );
+    background-size: 4px 4px;
+  }
+`;
+
 class Window extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.resizeHandleRef = React.createRef();
+  }
+
   state = {
     position: { x: 50, y: 50 },
     size: { width: 600, height: 400 },
     isDragging: false,
+    isResizing: false,
     dragOffset: { x: 0, y: 0 },
+    resizeStart: { x: 0, y: 0, width: 0, height: 0 },
   };
+
+  componentDidMount() {
+    // 使用 React95 内置的 resize 功能
+    if (this.resizeHandleRef.current) {
+      this.resizeHandleRef.current.addEventListener('mousedown', this.handleResizeStart);
+    }
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
+    document.removeEventListener('mousemove', this.handleResizeMove);
+    document.removeEventListener('mouseup', this.handleResizeEnd);
+    if (this.resizeHandleRef.current) {
+      this.resizeHandleRef.current.removeEventListener('mousedown', this.handleResizeStart);
+    }
+  }
 
   handleMouseDown = (e) => {
     const { onFocus } = this.props;
@@ -63,6 +117,49 @@ class Window extends React.PureComponent {
     this.setState({ isDragging: false });
     document.removeEventListener('mousemove', this.handleMouseMove);
     document.removeEventListener('mouseup', this.handleMouseUp);
+  };
+
+  handleResizeStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const { size } = this.state;
+    this.setState({
+      isResizing: true,
+      resizeStart: {
+        x: e.clientX,
+        y: e.clientY,
+        width: size.width,
+        height: size.height,
+      },
+    });
+
+    document.addEventListener('mousemove', this.handleResizeMove);
+    document.addEventListener('mouseup', this.handleResizeEnd);
+  };
+
+  handleResizeMove = (e) => {
+    const { isResizing, resizeStart } = this.state;
+    if (isResizing) {
+      const deltaX = e.clientX - resizeStart.x;
+      const deltaY = e.clientY - resizeStart.y;
+      
+      const newWidth = Math.max(300, resizeStart.width + deltaX);
+      const newHeight = Math.max(200, resizeStart.height + deltaY);
+      
+      this.setState({
+        size: {
+          width: newWidth,
+          height: newHeight,
+        },
+      });
+    }
+  };
+
+  handleResizeEnd = () => {
+    this.setState({ isResizing: false });
+    document.removeEventListener('mousemove', this.handleResizeMove);
+    document.removeEventListener('mouseup', this.handleResizeEnd);
   };
 
   handleClose = () => {
@@ -119,6 +216,10 @@ class Window extends React.PureComponent {
             {children}
           </WindowContent>
         </R95Window>
+        <ResizeHandle
+          ref={this.resizeHandleRef}
+          onMouseDown={this.handleResizeStart}
+        />
       </WindowWrapper>
     );
   }

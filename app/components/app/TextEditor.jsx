@@ -39,6 +39,7 @@ const MenuButton = styled.button`
 
 const DropdownMenu = styled(MenuList)`
   min-width: 150px;
+  font-size: 12px;
 `;
 
 const EditorArea = styled.div`
