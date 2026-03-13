@@ -25,20 +25,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '18'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
       - name: Build with Next.js
-        run: npm run build
+        run: |
+          export NODE_OPTIONS=--openssl-legacy-provider
+          npm run build
 
       - name: Export to static files
-        run: npm run export
-
-      - name: Verify output
-        run: ls -la out
+        run: |
+          export NODE_OPTIONS=--openssl-legacy-provider
+          npm run export
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
