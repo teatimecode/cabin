@@ -8,17 +8,42 @@ const WindowWrapper = styled.div`
   display: ${props => props.$isMinimized ? 'none' : 'block'};
 `;
 
+const StyledWindow = styled(R95Window)`
+  & > article {
+    padding: 2px;
+  }
+`;
+
+const StyledWindowHeader = styled(WindowHeader)`
+  padding: 2px 4px;
+  min-height: 20px;
+  
+  & > * {
+    font-size: 12px;
+  }
+`;
+
 const TitleText = styled.span`
   flex: 1;
-  padding: 2px 4px;
+  padding: 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 12px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 2px;
+`;
+
+const SmallButton = styled(Button)`
+  min-width: 16px;
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  font-size: 10px;
+  font-weight: normal;
 `;
 
 const ResizeHandle = styled.div`
@@ -222,7 +247,7 @@ class Window extends React.PureComponent {
         $isMinimized={isMinimized}
         style={windowStyle}
       >
-        <R95Window
+        <StyledWindow
           style={{
             width: '100%',
             height: '100%',
@@ -230,7 +255,7 @@ class Window extends React.PureComponent {
             flexDirection: 'column',
           }}
         >
-          <WindowHeader
+          <StyledWindowHeader
             className="title-bar"
             onMouseDown={this.handleMouseDown}
             onDoubleClick={this.handleTitleDoubleClick}
@@ -239,17 +264,17 @@ class Window extends React.PureComponent {
           >
             <TitleText>{window.title}</TitleText>
             <ButtonGroup>
-              <Button size="sm" square onClick={this.handleMinimize}>_</Button>
-              <Button size="sm" square onClick={this.handleMaximize}>
-                {isMaximized ? '❐' : '□'}
-              </Button>
-              <Button size="sm" square onClick={this.handleClose}>×</Button>
+              <SmallButton onClick={this.handleMinimize}>_</SmallButton>
+              <SmallButton onClick={this.handleMaximize}>
+                {isMaximized ? '↔' : '□'}
+              </SmallButton>
+              <SmallButton onClick={this.handleClose}>×</SmallButton>
             </ButtonGroup>
-          </WindowHeader>
+          </StyledWindowHeader>
           <WindowContent style={{ flex: 1, overflow: 'hidden', padding: 0 }}>
             {children}
           </WindowContent>
-        </R95Window>
+        </StyledWindow>
         {!isMaximized && (
           <ResizeHandle
             ref={this.resizeHandleRef}

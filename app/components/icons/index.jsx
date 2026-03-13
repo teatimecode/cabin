@@ -10,12 +10,12 @@ import {
   RecycleFull,
   Settings,
   Help,
-  PowerOff,
   Explorer100,
   User,
-  User1,
   FileText,
-  Gcdef100,
+  Brush,
+  Logo,
+  Shell32136,
 } from '@react95/icons';
 
 /**
@@ -30,18 +30,18 @@ export const IconMap = {
   'folder-open': FolderOpen,
   'document': FileText,
   'notepad': Notepad,
-  'picture': Gcdef100, // 使用一个通用图标代替图片
+  'picture': Brush, // 使用 Brush 图标
   'recycle-bin': RecycleEmpty,
   'recycle-bin-full': RecycleFull,
   'explorer': Explorer100,
   'user': User,
-  'windows': User1, // Windows 图标
+  'windows': Logo, // Windows Logo 图标
   // 开始菜单图标
   'startup': Explorer100,
   'documents': FileText,
   'settings': Settings,
   'help': Help,
-  'shutdown': PowerOff,
+  'shutdown': Shell32136, // 关机图标
 };
 
 // 获取图标组件

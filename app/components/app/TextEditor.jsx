@@ -38,7 +38,14 @@ const MenuButton = styled.button`
 
 const DropdownMenu = styled(MenuList)`
   min-width: 150px;
+`;
+
+const MenuItem = styled(MenuListItem)`
   font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  padding: 2px 8px;
+  height: auto;
+  min-height: 20px;
 `;
 
 const EditorArea = styled.div`
@@ -172,13 +179,12 @@ class TextEditor extends React.PureComponent {
                     return <Separator key={index} />;
                   }
                   return (
-                    <MenuListItem
+                    <MenuItem
                       key={index}
-                      size="sm"
                       onClick={() => this.handleMenuItemClick(item.action)}
                     >
                       {item.label}
-                    </MenuListItem>
+                    </MenuItem>
                   );
                 })}
               </DropdownMenu>

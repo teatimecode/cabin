@@ -143,12 +143,12 @@ class FileExplorer extends React.PureComponent {
   getFileIcon = (item) => {
     // 根据项目 ID 获取特定图标
     if (item.id === 'my-computer' || item.id === 'c-drive' || item.id === 'd-drive') {
-      return getIcon('my-computer');
+      return getIcon('my-computer', { size: 'large' });
     }
     
     // 根据类型获取图标
     const iconName = fileIconMap[item.type] || fileIconMap[item.app] || fileIconMap['default'];
-    return getIcon(iconName);
+    return getIcon(iconName, { size: 'large' });
   };
 
   render() {
