@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Window as R95Window, WindowHeader, WindowContent, Button } from 'react95';
+import { MinimizeIcon, MaximizeIcon, RestoreIcon, CloseIcon } from '../icons';
 
 const WindowWrapper = styled.div`
   position: absolute;
@@ -264,11 +265,15 @@ class Window extends React.PureComponent {
           >
             <TitleText>{window.title}</TitleText>
             <ButtonGroup>
-              <SmallButton onClick={this.handleMinimize}>_</SmallButton>
-              <SmallButton onClick={this.handleMaximize}>
-                {isMaximized ? '↔' : '□'}
+              <SmallButton onClick={this.handleMinimize}>
+                <MinimizeIcon size={8} />
               </SmallButton>
-              <SmallButton onClick={this.handleClose}>×</SmallButton>
+              <SmallButton onClick={this.handleMaximize}>
+                {isMaximized ? <RestoreIcon size={8} /> : <MaximizeIcon size={8} />}
+              </SmallButton>
+              <SmallButton onClick={this.handleClose}>
+                <CloseIcon size={8} />
+              </SmallButton>
             </ButtonGroup>
           </StyledWindowHeader>
           <WindowContent style={{ flex: 1, overflow: 'hidden', padding: 0 }}>

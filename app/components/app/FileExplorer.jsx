@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Button, ScrollView } from 'react95';
-import { getIcon } from '../icons';
+import { getIcon, UpArrowIcon, LeftArrowIcon } from '../icons';
 
 const Container = styled.div`
   display: flex;
@@ -189,10 +189,10 @@ class FileExplorer extends React.PureComponent {
       <Container>
         <Toolbar>
           <ToolbarButton onClick={this.handleGoUp} disabled={currentPath === '/'}>
-            ⬆
+            <UpArrowIcon size={10} />
           </ToolbarButton>
           <ToolbarButton onClick={this.handleGoBack}>
-            ◀
+            <LeftArrowIcon size={10} />
           </ToolbarButton>
           <AddressBar shadow={false}>
             {getDisplayName(currentPath)}
