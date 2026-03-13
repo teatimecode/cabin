@@ -6,10 +6,21 @@ import MainConfig from 'app/config/main';
 
 const ResetStyles = createGlobalStyle`
   ${styleReset}
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html, body, #__next {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 `;
 
 const FullScreenStyle = {
-  position: 'absolute',
+  position: 'fixed',
   top: '0',
   right: '0',
   bottom: '0',

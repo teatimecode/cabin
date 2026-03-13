@@ -7,6 +7,26 @@ const WindowWrapper = styled.div`
   user-select: none;
 `;
 
+const TitleBarWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: move;
+`;
+
+const TitleText = styled.span`
+  flex: 1;
+  padding: 2px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 2px;
+`;
+
 class Window extends React.PureComponent {
   state = {
     position: { x: 50, y: 50 },
@@ -20,7 +40,7 @@ class Window extends React.PureComponent {
     if (onFocus) onFocus();
 
     // 检查是否点击的是标题栏（非按钮区域）
-    if (e.target.closest('.title-bar')) {
+    if (e.target.closest('.title-bar') && !e.target.closest('button')) {
       this.setState({
         isDragging: true,
         dragOffset: {
@@ -93,13 +113,14 @@ class Window extends React.PureComponent {
             className="title-bar"
             onMouseDown={this.handleMouseDown}
             active={isActive}
+            style={{ display: 'flex', alignItems: 'center', padding: '2px 4px' }}
           >
-            <span style={{ flex: 1, padding: '2px 4px' }}>{window.title}</span>
-            <div style={{ display: 'flex', gap: '2px' }}>
-              <Button onClick={this.handleMinimize} style={{ minWidth: '20px', padding: '2px' }}>─</Button>
-              <Button onClick={this.handleMaximize} style={{ minWidth: '20px', padding: '2px' }}>□</Button>
-              <Button onClick={this.handleClose} style={{ minWidth: '20px', padding: '2px' }}>×</Button>
-            </div>
+            <TitleText>{window.title}</TitleText>
+            <ButtonGroup>
+              <Button onClick={this.handleMinimize} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>_</Button>
+              <Button onClick={this.handleMaximize} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>□</Button>
+              <Button onClick={this.handleClose} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>×</Button>
+            </ButtonGroup>
           </WindowHeader>
           <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
             {children}

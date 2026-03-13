@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 import { ThemeProvider } from "styled-components";
 import { AppBar } from 'react95';
 
@@ -6,10 +7,14 @@ import ShortCutContainer from 'app/components/window/ShortCutContainer';
 import WindowManager from 'app/components/window/WindowManager';
 import TaskBar from './TaskBar';
 
-
-const DesktopStyles = {
-  height: '100%',
-}
+const DesktopWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+`;
 
 class Desktop extends React.Component {
   state = {
@@ -32,8 +37,7 @@ class Desktop extends React.Component {
 
     return (
       <ThemeProvider theme={config.theme}>
-
-        <div style={{ ...DesktopStyles, background: config.background }}>
+        <DesktopWrapper style={{ background: config.background }}>
           <WindowManager
             ref={this.setWindowManagerRef}
           />
@@ -44,9 +48,7 @@ class Desktop extends React.Component {
           />
 
           <TaskBar config={config} />
-
-        </div>
-
+        </DesktopWrapper>
       </ThemeProvider>
     )
   };

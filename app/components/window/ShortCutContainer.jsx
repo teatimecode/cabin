@@ -9,6 +9,7 @@ const Container = styled.div`
   right: 0;
   bottom: 28px;
   padding: 16px;
+  padding-top: 8px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
