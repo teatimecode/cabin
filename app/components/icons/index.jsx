@@ -104,6 +104,56 @@ export const IconMap = {
   'picture': PictureIcon,
   'recycle-bin': RecycleBinIcon,
   'recycle-bin-full': (props) => <RecycleBinIcon empty={false} {...props} />,
+  'startup': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" shapeRendering="crispEdges" viewBox="0 0 16 16" style={{ display: 'inline-block' }}>
+      <path stroke="#000" d="M0 0h16v16H0z"/>
+      <path stroke="#fff" d="M1 1h14v14H1z"/>
+      <path stroke="#00f" d="M2 2h1v1H2zm2 0h1v1H4zm2 0h1v1H6zm2 0h1v1H8z"/>
+      <path stroke="#0ff" d="M3 2h1v1H3zm2 0h1v1H5zm2 0h1v1H7z"/>
+      <path stroke="gray" d="M2 4h2v2H2zm3 0h2v2H5zm3 0h2v2H8z"/>
+      <path stroke="#008000" d="M2 7h2v2H2zm3 0h2v2H5zm3 0h2v2H8z"/>
+      <path stroke="#c0c0c0" d="M2 10h12v4H2z"/>
+      <path stroke="#808080" d="M2 10h12v1H2zM2 13h12v1H2z"/>
+    </svg>
+  ),
+  'documents': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" shapeRendering="crispEdges" viewBox="0 0 16 16" style={{ display: 'inline-block' }}>
+      <path stroke="#000" d="M2 0h8l4 4v11H2z"/>
+      <path stroke="#fff" d="M3 1h6v3H3z"/>
+      <path stroke="#c0c0c0" d="M10 4v1h1v10H3V5h7z"/>
+      <path stroke="gray" d="M3 2h1v1H3zm0 2h6v1H3z"/>
+      <path stroke="#808080" d="M9 5v9H4V6h5z"/>
+      <path stroke="#fff" d="M5 7h2v1H5zm0 2h3v1H5zm0 2h2v1H5z"/>
+    </svg>
+  ),
+  'settings': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" shapeRendering="crispEdges" viewBox="0 0 16 16" style={{ display: 'inline-block' }}>
+      <path stroke="#000" d="M0 0h16v16H0z"/>
+      <path stroke="#c0c0c0" d="M1 1h14v14H1z"/>
+      <path stroke="#808080" d="M1 1h1v14H1zm14 0h1v14h-1z"/>
+      <path stroke="#fff" d="M2 2h12v12H2z"/>
+      <path stroke="#808080" d="M2 2h1v12H2zm12 0h1v12h-1z"/>
+      <path stroke="#c0c0c0" d="M3 3h10v10H3z"/>
+      <path fill="#808080" d="M7 5h2v1H7zm0 2h2v1H7zm0 2h2v1H7z"/>
+    </svg>
+  ),
+  'help': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" shapeRendering="crispEdges" viewBox="0 0 16 16" style={{ display: 'inline-block' }}>
+      <path stroke="#000" d="M1 0h14v14H1z"/>
+      <path stroke="#fff" d="M2 1h12v12H2z"/>
+      <path stroke="#00f" d="M3 2h2m1 0h1m-4 1h2m1 0h1m-3 1h2m1 0h1m-3 1h2m1 0h1m-3 1h2m1 0h1"/>
+      <path stroke="#c0c0c0" d="M3 7h10v1H3zm0 2h8v1H3zm0 2h10v1H3zm0 2h6v1H3z"/>
+    </svg>
+  ),
+  'shutdown': () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" shapeRendering="crispEdges" viewBox="0 0 16 16" style={{ display: 'inline-block' }}>
+      <path stroke="#000" d="M0 0h16v16H0z"/>
+      <path stroke="#fff" d="M1 1h14v14H1z"/>
+      <path stroke="#808080" d="M1 1h14v1H1zm0 2h14v1H1zm0 2h14v1H1zm0 2h14v1H1zm0 2h14v1H1zm0 2h14v1H1z"/>
+      <path stroke="#c0c0c0" d="M2 3h12v8H2z"/>
+      <path stroke="#ff0000" d="M4 5h8v1H4zm0 2h8v1H4zm0 2h8v1H4z"/>
+    </svg>
+  ),
 };
 
 // 获取图标组件

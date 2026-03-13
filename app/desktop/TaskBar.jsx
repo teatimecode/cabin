@@ -4,6 +4,7 @@ import {
   AppBar, Toolbar, Button, MenuList, MenuListItem, Divider
 } from 'react95';
 import { Cutout } from 'react95';
+import { getIcon } from '../components/icons';
 
 const MenuWrapper = styled.div`
   position: relative;
@@ -72,25 +73,25 @@ class StartMenu extends React.PureComponent {
         {open && (
           <DropdownMenu onClick={this.handleClose}>
             <MenuListItem>
-              <span style={{ marginRight: 8 }}>📝</span>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('startup')}</span>
               程序
             </MenuListItem>
             <MenuListItem>
-              <span style={{ marginRight: 8 }}>📄</span>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('documents')}</span>
               文档
             </MenuListItem>
             <MenuListItem>
-              <span style={{ marginRight: 8 }}>⚙️</span>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('settings')}</span>
               设置
             </MenuListItem>
             <Divider />
             <MenuListItem>
-              <span style={{ marginRight: 8 }}>❓</span>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
               帮助
             </MenuListItem>
             <Divider />
             <MenuListItem>
-              <span style={{ marginRight: 8 }}>🔌</span>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('shutdown')}</span>
               关机
             </MenuListItem>
           </DropdownMenu>
