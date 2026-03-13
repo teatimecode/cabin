@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button } from 'react95';
-import { AppType } from '../../config/apps';
+import { Button, Cutout } from 'react95';
+import { getIcon } from '../icons';
 
 const Container = styled.div`
   display: flex;
@@ -15,19 +15,23 @@ const Toolbar = styled.div`
   align-items: center;
   padding: 4px;
   background: #c0c0c0;
-  border-bottom: 1px solid #808080;
   gap: 4px;
 `;
 
-const AddressBar = styled.div`
+const ToolbarButton = styled(Button)`
+  min-width: 28px;
+  padding: 0 4px;
+  font-size: 12px;
+`;
+
+const AddressBar = styled(Cutout)`
   display: flex;
   align-items: center;
   padding: 4px 8px;
   background: #fff;
-  border: 1px solid #808080;
-  border-style: inset;
   flex: 1;
   font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
 `;
 
 const Content = styled.div`
@@ -38,36 +42,53 @@ const Content = styled.div`
   align-content: flex-start;
   gap: 16px;
   overflow: auto;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  margin: 4px;
 `;
 
 const FileItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 80px;
+  width: 72px;
   padding: 4px;
   cursor: pointer;
+  user-select: none;
 
   &:hover {
     background: rgba(0, 0, 128, 0.1);
   }
-
-  &:active {
-    background: rgba(0, 0, 128, 0.2);
-  }
 `;
 
-const FileIcon = styled.div`
-  font-size: 32px;
+const FileIconWrapper = styled.div`
+  width: 32px;
+  height: 32px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const FileName = styled.span`
-  font-size: 12px;
+  font-size: 11px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
   text-align: center;
   word-wrap: break-word;
-  max-width: 72px;
+  max-width: 68px;
+  color: #000;
 `;
+
+// 图标映射
+const fileIconMap = {
+  'folder': 'folder',
+  'folder-open': 'folder-open',
+  'notepad': 'notepad',
+  'image': 'picture',
+  'my-computer': 'my-computer',
+  'default': 'document',
+};
 
 class FileExplorer extends React.PureComponent {
   state = {
@@ -120,21 +141,18 @@ class FileExplorer extends React.PureComponent {
   };
 
   getFileIcon = (item) => {
-    if (item.type === 'folder') {
-      return '📁';
+    // 根据项目 ID 获取特定图标
+    if (item.id === 'my-computer' || item.id === 'c-drive' || item.id === 'd-drive') {
+      return getIcon('my-computer');
     }
-    switch (item.app) {
-      case 'notepad':
-        return '📝';
-      case 'image':
-        return '🖼️';
-      default:
-        return '📄';
-    }
+    
+    // 根据类型获取图标
+    const iconName = fileIconMap[item.type] || fileIconMap[item.app] || fileIconMap['default'];
+    return getIcon(iconName);
   };
 
   render() {
-    const { fileSystem, onOpenItem } = this.props;
+    const { fileSystem } = this.props;
     const { currentPath } = this.state;
 
     // 获取当前目录内容
@@ -155,17 +173,29 @@ class FileExplorer extends React.PureComponent {
       });
     }
 
+    // 显示名称映射
+    const getDisplayName = (path) => {
+      const names = {
+        '/': '桌面',
+        '/my-blog': '我的博客',
+        '/my-documents': '我的文档',
+        '/my-pictures': '我的图片',
+        '/my-computer': '我的电脑',
+      };
+      return names[path] || path;
+    };
+
     return (
       <Container>
         <Toolbar>
-          <Button onClick={this.handleGoUp} disabled={currentPath === '/'}>
-            ⬆️
-          </Button>
-          <Button onClick={this.handleGoBack}>
-            🔙
-          </Button>
-          <AddressBar>
-            {currentPath === '/' ? '桌面' : currentPath}
+          <ToolbarButton onClick={this.handleGoUp} disabled={currentPath === '/'}>
+            ⬆
+          </ToolbarButton>
+          <ToolbarButton onClick={this.handleGoBack}>
+            ◀
+          </ToolbarButton>
+          <AddressBar shadow={false}>
+            {getDisplayName(currentPath)}
           </AddressBar>
         </Toolbar>
         <Content>
@@ -174,7 +204,9 @@ class FileExplorer extends React.PureComponent {
               key={item.id}
               onDoubleClick={() => this.handleItemDoubleClick(item)}
             >
-              <FileIcon>{this.getFileIcon(item)}</FileIcon>
+              <FileIconWrapper>
+                {this.getFileIcon(item)}
+              </FileIconWrapper>
               <FileName>{item.name}</FileName>
             </FileItem>
           ))}

@@ -1,17 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Window as R95Window, WindowHeader, Button } from 'react95';
+import { Window as R95Window, WindowHeader, WindowContent, Button } from 'react95';
 
 const WindowWrapper = styled.div`
   position: absolute;
   user-select: none;
-`;
-
-const TitleBarWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  width: 100%;
-  cursor: move;
 `;
 
 const TitleText = styled.span`
@@ -113,18 +106,18 @@ class Window extends React.PureComponent {
             className="title-bar"
             onMouseDown={this.handleMouseDown}
             active={isActive}
-            style={{ display: 'flex', alignItems: 'center', padding: '2px 4px' }}
+            style={{ display: 'flex', alignItems: 'center' }}
           >
             <TitleText>{window.title}</TitleText>
             <ButtonGroup>
-              <Button onClick={this.handleMinimize} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>_</Button>
-              <Button onClick={this.handleMaximize} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>□</Button>
-              <Button onClick={this.handleClose} style={{ minWidth: '16px', height: '16px', padding: '0 2px', fontSize: '10px' }}>×</Button>
+              <Button size="sm" square onClick={this.handleMinimize}>_</Button>
+              <Button size="sm" square onClick={this.handleMaximize}>□</Button>
+              <Button size="sm" square onClick={this.handleClose}>×</Button>
             </ButtonGroup>
           </WindowHeader>
-          <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+          <WindowContent style={{ flex: 1, overflow: 'hidden', padding: 0 }}>
             {children}
-          </div>
+          </WindowContent>
         </R95Window>
       </WindowWrapper>
     );

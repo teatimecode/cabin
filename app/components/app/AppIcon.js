@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { getIcon } from '../icons';
 
 const IconWrapper = styled.div`
   display: flex;
@@ -20,18 +21,25 @@ const IconWrapper = styled.div`
 `;
 
 const IconImage = styled.div`
-  font-size: 32px;
+  width: 32px;
+  height: 32px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const IconLabel = styled.span`
-  font-size: 12px;
-  color: #000;
+  font-size: 11px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  color: #fff;
   text-align: center;
   word-wrap: break-word;
   max-width: 72px;
-  background: ${props => props.selected ? 'rgba(0, 0, 128, 0.2)' : 'transparent'};
-  border: ${props => props.selected ? '1px dotted #000' : '1px dotted transparent'};
+  padding: 1px 2px;
+  background: ${props => props.selected ? '#000080' : 'transparent'};
+  color: ${props => props.selected ? '#fff' : '#fff'};
+  text-shadow: 1px 1px 1px #000;
 `;
 
 class AppIcon extends React.PureComponent {
@@ -52,12 +60,30 @@ class AppIcon extends React.PureComponent {
   render() {
     const { app, selected } = this.props;
 
+    // 获取图标，如果没有指定则根据类型使用默认图标
+    const renderIcon = () => {
+      if (app.iconName) {
+        return getIcon(app.iconName);
+      }
+      
+      // 根据应用类型返回默认图标
+      switch (app.type) {
+        case 'folder':
+        case 'explorer':
+          return getIcon('folder');
+        case 'notepad':
+          return getIcon('notepad');
+        default:
+          return getIcon('document');
+      }
+    };
+
     return (
       <IconWrapper
         onClick={this.handleClick}
         onDoubleClick={this.handleDoubleClick}
       >
-        <IconImage>{app.icon || '📄'}</IconImage>
+        <IconImage>{renderIcon()}</IconImage>
         <IconLabel selected={selected}>{app.name}</IconLabel>
       </IconWrapper>
     );

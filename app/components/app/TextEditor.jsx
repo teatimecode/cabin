@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, MenuList, MenuListItem, Divider } from 'react95';
+import { MenuList, MenuListItem, Divider } from 'react95';
+import { Cutout } from 'react95';
 import MarkdownRenderer from './MarkdownRenderer';
 
 const Container = styled.div`
@@ -10,56 +11,59 @@ const Container = styled.div`
   background: #c0c0c0;
 `;
 
-const Toolbar = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  background: #c0c0c0;
-  border-bottom: 1px solid #808080;
-  gap: 4px;
-`;
-
 const MenuBar = styled.div`
   display: flex;
   background: #c0c0c0;
-  border-bottom: 1px solid #808080;
-  padding: 2px 4px;
-  gap: 4px;
+  padding: 2px 0;
 `;
 
 const MenuButton = styled.button`
   background: transparent;
   border: none;
-  padding: 4px 8px;
+  padding: 2px 8px;
   cursor: pointer;
   font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  height: 20px;
 
   &:hover {
-    background: rgba(0, 0, 128, 0.1);
+    background: #000080;
+    color: #fff;
   }
 
-  &:active {
-    background: rgba(0, 0, 128, 0.2);
+  &:active, &[data-open="true"] {
+    background: #000080;
+    color: #fff;
   }
 `;
 
-const EditorContent = styled.div`
+const DropdownMenu = styled(MenuList)`
+  min-width: 150px;
+`;
+
+const EditorArea = styled.div`
   flex: 1;
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #808080;
-  border-style: inset;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #808080;
+`;
+
+const EditorContent = styled(Cutout)`
+  flex: 1;
   margin: 4px;
-  padding: 8px;
+  background: #fff;
+  padding: 4px;
+  overflow: auto;
 `;
 
 const StatusBar = styled.div`
   display: flex;
   justify-content: space-between;
-  padding: 4px 8px;
+  padding: 2px 8px;
   background: #c0c0c0;
-  border-top: 1px solid #808080;
-  font-size: 12px;
+  font-size: 11px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  border-top: 1px solid #fff;
 `;
 
 class TextEditor extends React.PureComponent {
@@ -93,45 +97,47 @@ class TextEditor extends React.PureComponent {
       {
         name: '文件',
         items: [
-          { label: '新建', action: 'new' },
-          { label: '打开...', action: 'open' },
-          { label: '保存', action: 'save' },
+          { label: '新建(N)', action: 'new' },
+          { label: '打开(O)...', action: 'open' },
+          { label: '保存(S)', action: 'save' },
           { type: 'divider' },
-          { label: '退出', action: 'exit' },
+          { label: '退出(X)', action: 'exit' },
         ],
       },
       {
         name: '编辑',
         items: [
-          { label: '撤销', action: 'undo' },
+          { label: '撤销(U)', action: 'undo' },
           { type: 'divider' },
-          { label: '剪切', action: 'cut' },
-          { label: '复制', action: 'copy' },
-          { label: '粘贴', action: 'paste' },
+          { label: '剪切(T)', action: 'cut' },
+          { label: '复制(C)', action: 'copy' },
+          { label: '粘贴(P)', action: 'paste' },
           { type: 'divider' },
-          { label: '全选', action: 'selectAll' },
+          { label: '全选(A)', action: 'selectAll' },
         ],
       },
       {
         name: '格式',
         items: [
-          { label: '自动换行', action: 'wordWrap' },
-          { label: '字体...', action: 'font' },
+          { label: '自动换行(W)', action: 'wordWrap' },
+          { label: '字体(F)...', action: 'font' },
         ],
       },
       {
         name: '查看',
         items: [
-          { label: '状态栏', action: 'statusBar' },
+          { label: '状态栏(S)', action: 'statusBar' },
           { type: 'divider' },
-          { label: '放大', action: 'zoomIn' },
-          { label: '缩小', action: 'zoomOut' },
+          { label: '放大(I)', action: 'zoomIn' },
+          { label: '缩小(O)', action: 'zoomOut' },
         ],
       },
       {
         name: '帮助',
         items: [
-          { label: '关于记事本', action: 'about' },
+          { label: '查看帮助(H)', action: 'help' },
+          { type: 'divider' },
+          { label: '关于记事本(A)', action: 'about' },
         ],
       },
     ];
@@ -141,6 +147,7 @@ class TextEditor extends React.PureComponent {
         {menus.map(menu => (
           <div key={menu.name} style={{ position: 'relative' }}>
             <MenuButton
+              data-open={menuOpen === menu.name}
               onClick={(e) => {
                 e.stopPropagation();
                 this.handleMenuClick(menu.name);
@@ -149,7 +156,7 @@ class TextEditor extends React.PureComponent {
               {menu.name}
             </MenuButton>
             {menuOpen === menu.name && (
-              <MenuList
+              <DropdownMenu
                 style={{
                   position: 'absolute',
                   top: '100%',
@@ -167,13 +174,14 @@ class TextEditor extends React.PureComponent {
                   return (
                     <MenuListItem
                       key={index}
+                      size="sm"
                       onClick={() => this.handleMenuItemClick(item.action)}
                     >
                       {item.label}
                     </MenuListItem>
                   );
                 })}
-              </MenuList>
+              </DropdownMenu>
             )}
           </div>
         ))}
@@ -182,7 +190,7 @@ class TextEditor extends React.PureComponent {
   }
 
   render() {
-    const { content, fileName, showStatusBar } = this.props;
+    const { content, showStatusBar } = this.props;
     const lineCount = content ? content.split('\n').length : 0;
     const charCount = content ? content.length : 0;
 
@@ -190,24 +198,16 @@ class TextEditor extends React.PureComponent {
       <Container onClick={this.handleClickOutside}>
         {this.renderMenuBar()}
 
-        <Toolbar>
-          <Button onClick={() => this.handleMenuItemClick('new')}>
-            新建
-          </Button>
-          <Button onClick={() => this.handleMenuItemClick('save')}>
-            保存
-          </Button>
-        </Toolbar>
-
-        <EditorContent>
-          <MarkdownRenderer content={content} />
-        </EditorContent>
+        <EditorArea>
+          <EditorContent shadow={false}>
+            <MarkdownRenderer content={content} />
+          </EditorContent>
+        </EditorArea>
 
         {showStatusBar !== false && (
           <StatusBar>
-            <span>行: {lineCount}</span>
-            <span>字符: {charCount}</span>
-            <span>UTF-8</span>
+            <span>第 1 行，第 1 列</span>
+            <span>100% | Windows (CRLF) | UTF-8</span>
           </StatusBar>
         )}
       </Container>
