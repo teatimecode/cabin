@@ -326,49 +326,71 @@ class WindowManagerInner extends React.PureComponent {
 }
 
 /**
- * 窗口管理器包装组件（提供Context）
+ * 窗口管理器包装组件（使用Context和forwardRef）
  */
-function WindowManagerWrapper(props) {
+const WindowManagerWrapper = React.forwardRef((props, ref) => {
   const fsContext = useFileSystem();
+  const innerRef = React.useRef(null);
+
+  // 暴露内部组件的方法给父组件
+  React.useImperativeHandle(ref, () => ({
+    openWindow: (app) => {
+      if (innerRef.current) {
+        innerRef.current.openWindow(app);
+      }
+    },
+    closeWindow: (windowId) => {
+      if (innerRef.current) {
+        innerRef.current.closeWindow(windowId);
+      }
+    },
+    focusWindow: (windowId) => {
+      if (innerRef.current) {
+        innerRef.current.focusWindow(windowId);
+      }
+    },
+    restoreWindow: (windowId) => {
+      if (innerRef.current) {
+        innerRef.current.restoreWindow(windowId);
+      }
+    },
+    getWindows: () => {
+      if (innerRef.current) {
+        return innerRef.current.getWindows();
+      }
+      return [];
+    },
+    getActiveWindowId: () => {
+      if (innerRef.current) {
+        return innerRef.current.getActiveWindowId();
+      }
+      return null;
+    },
+  }));
   
   return (
     <WindowManagerInner
+      ref={innerRef}
       {...props}
       fileSystem={fsContext.fileSystem}
       getFileContent={fsContext.getFileContent}
     />
   );
-}
+});
+
+WindowManagerWrapper.displayName = 'WindowManagerWrapper';
 
 /**
  * 窗口管理器主组件
  */
-class WindowManager extends React.PureComponent {
-  render() {
-    return (
-      <FSProvider>
-        <WindowManagerWrapper {...this.props} />
-      </FSProvider>
-    );
-  }
+const WindowManager = React.forwardRef((props, ref) => {
+  return (
+    <FSProvider>
+      <WindowManagerWrapper {...props} ref={ref} />
+    </FSProvider>
+  );
+});
 
-  // 暴露方法供外部调用
-  getWindows = () => {
-    // 通过ref调用
-    return [];
-  };
-
-  getActiveWindowId = () => {
-    return null;
-  };
-
-  restoreWindow = (windowId) => {
-    // 通过ref调用
-  };
-
-  openFolderInNewWindow = (folder) => {
-    // 通过ref调用
-  };
-}
+WindowManager.displayName = 'WindowManager';
 
 export default WindowManager;
