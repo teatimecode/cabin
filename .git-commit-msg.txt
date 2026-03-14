@@ -1,8 +1,1 @@
-feat: filesystem refactor and text editor improvements
-
-- Add virtual filesystem service layer (app/lib/fs/)
-- Support removable disk mounting (File System Access API)
-- Use User1 icon for Start button (22x22)
-- TextEditor supports edit, new, save functions
-- Add Ctrl+N/O/S shortcuts
-- Add medium size icon support
+fix: WindowManager ref forwarding issue

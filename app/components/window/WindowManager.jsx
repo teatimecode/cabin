@@ -264,6 +264,28 @@ class WindowManagerInner extends React.PureComponent {
     this.setState({ windows: newWindows });
   };
 
+  componentDidMount() {
+    // 组件挂载后，将方法暴露给父组件
+    const { onRef } = this.props;
+    if (onRef) {
+      onRef({
+        openWindow: this.openWindow,
+        closeWindow: this.closeWindow,
+        focusWindow: this.focusWindow,
+        restoreWindow: this.restoreWindow,
+        getWindows: this.getWindows,
+        getActiveWindowId: this.getActiveWindowId,
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    const { onRef } = this.props;
+    if (onRef) {
+      onRef(null);
+    }
+  }
+
   getWindowContent = (window) => {
     const { app, path, content, title, id } = window;
     const { fileSystem } = this.props;
@@ -326,51 +348,55 @@ class WindowManagerInner extends React.PureComponent {
 }
 
 /**
- * 窗口管理器包装组件（使用Context和forwardRef）
+ * 窗口管理器包装组件（使用Context）
  */
 const WindowManagerWrapper = React.forwardRef((props, ref) => {
   const fsContext = useFileSystem();
-  const innerRef = React.useRef(null);
+  const [instance, setInstance] = React.useState(null);
 
   // 暴露内部组件的方法给父组件
   React.useImperativeHandle(ref, () => ({
     openWindow: (app) => {
-      if (innerRef.current) {
-        innerRef.current.openWindow(app);
+      if (instance) {
+        instance.openWindow(app);
       }
     },
     closeWindow: (windowId) => {
-      if (innerRef.current) {
-        innerRef.current.closeWindow(windowId);
+      if (instance) {
+        instance.closeWindow(windowId);
       }
     },
     focusWindow: (windowId) => {
-      if (innerRef.current) {
-        innerRef.current.focusWindow(windowId);
+      if (instance) {
+        instance.focusWindow(windowId);
       }
     },
     restoreWindow: (windowId) => {
-      if (innerRef.current) {
-        innerRef.current.restoreWindow(windowId);
+      if (instance) {
+        instance.restoreWindow(windowId);
       }
     },
     getWindows: () => {
-      if (innerRef.current) {
-        return innerRef.current.getWindows();
+      if (instance) {
+        return instance.getWindows();
       }
       return [];
     },
     getActiveWindowId: () => {
-      if (innerRef.current) {
-        return innerRef.current.getActiveWindowId();
+      if (instance) {
+        return instance.getActiveWindowId();
       }
       return null;
     },
   }));
+
+  const handleRef = React.useCallback((inst) => {
+    setInstance(inst);
+  }, []);
   
   return (
     <WindowManagerInner
-      ref={innerRef}
+      onRef={handleRef}
       {...props}
       fileSystem={fsContext.fileSystem}
       getFileContent={fsContext.getFileContent}
