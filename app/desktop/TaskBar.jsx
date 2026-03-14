@@ -84,7 +84,7 @@ class StartMenu extends React.PureComponent {
       <MenuWrapper>
         <StartButton 
           onClick={this.handleClick} 
-          active={open}
+          active={open ? true : undefined}
         >
           {getIcon('windows', { size: 'medium' })}
           开始
@@ -107,6 +107,12 @@ class StartMenu extends React.PureComponent {
             <MenuListItem>
               <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
               帮助
+            </MenuListItem>
+            <MenuListItem>
+              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
+              <a href="https://react95.github.io/React95/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                React95 官方文档
+              </a>
             </MenuListItem>
             <Separator />
             <MenuListItem>
@@ -144,7 +150,7 @@ class Clock extends React.PureComponent {
     const minutes = time.getMinutes().toString().padStart(2, '0');
     
     return (
-      <ClockArea>
+      <ClockArea $shadow={false}>
         {hours}:{minutes}
       </ClockArea>
     );
@@ -196,7 +202,7 @@ class TaskBar extends React.PureComponent {
     const { windows, activeWindowId } = this.state;
 
     return (
-      <AppBar position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
+      <AppBar $position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
         <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
             <StartMenu />
@@ -204,7 +210,7 @@ class TaskBar extends React.PureComponent {
               {windows.map(window => (
                 <WindowButton
                   key={window.id}
-                  active={activeWindowId === window.id && !window.isMinimized}
+                  active={activeWindowId === window.id && !window.isMinimized ? true : undefined}
                   onClick={() => this.handleWindowClick(window)}
                 >
                   {getIcon(window.icon || 'folder', { size: 'small' })}

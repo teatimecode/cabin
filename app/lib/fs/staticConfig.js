@@ -168,7 +168,7 @@ export const StaticFileSystem = {
   // 可移动磁盘占位符
   '/removable': {
     type: 'placeholder',
-    name: '挂载可移动磁盘...',
+    name: '可移动磁盘',
     icon: 'drive-removable',
     mountable: true,
     children: [],

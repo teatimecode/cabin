@@ -215,7 +215,7 @@ function FileExplorerContent({ initialPath, onOpenItem, fileSystem: propFileSyst
     
     // 可挂载占位符
     if (item.type === 'placeholder') {
-      return getIcon('my-computer', { size: 'large' });
+      return getIcon(item.icon || 'drive-removable', { size: 'large' });
     }
     
     // 根据类型或应用获取图标

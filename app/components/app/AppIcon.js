@@ -84,6 +84,12 @@ class AppIcon extends React.PureComponent {
         case 'drive':
         case 'DRIVE':
           return getIcon('drive', { size: 'large' });
+        case 'placeholder':
+        case 'PLACEHOLDER':
+          return getIcon('drive-removable', { size: 'large' });
+        case 'root':
+        case 'ROOT':
+          return getIcon('my-computer', { size: 'large' });
         default:
           return getIcon('document', { size: 'large' });
       }
