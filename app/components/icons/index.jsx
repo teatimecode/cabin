@@ -12,6 +12,7 @@ import {
   Help,
   Explorer100,
   User,
+  User1,
   FileText,
   Brush,
   Logo,
@@ -78,7 +79,8 @@ export const IconMap = {
   'recycle-bin-full': RecycleFull,
   'explorer': Explorer100,
   'user': User,
-  'windows': Logo, // Windows Logo 图标
+  'windows': User1, // Windows User1 图标 (22x22)
+  'logo': Logo, // Windows Logo 图标
   // 开始菜单图标
   'startup': Explorer100,
   'documents': FileText,
@@ -88,12 +90,19 @@ export const IconMap = {
 };
 
 // 获取图标组件
-// size: 'large' (32x32) 或 'small' (16x16)
+// size: 'large' (32x32), 'medium' (22x22), 或 'small' (16x16)
 export function getIcon(iconName, props = {}) {
   const IconComponent = IconMap[iconName];
   
   // 根据 size 参数设置 variant
-  const variant = props.size === 'large' ? '32x32_4' : '16x16_4';
+  let variant;
+  if (props.size === 'large') {
+    variant = '32x32_4';
+  } else if (props.size === 'medium') {
+    variant = '22x22_4';
+  } else {
+    variant = '16x16_4';
+  }
   const { size, ...restProps } = props;
   
   if (IconComponent) {

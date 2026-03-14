@@ -1,0 +1,6 @@
+{
+  "name": "回收站",
+  "type": "folder",
+  "icon": "recycle-bin",
+  "description": "已删除文件"
+}

@@ -86,7 +86,7 @@ class StartMenu extends React.PureComponent {
           onClick={this.handleClick} 
           active={open}
         >
-          {getIcon('windows', { size: 'small' })}
+          {getIcon('windows', { size: 'medium' })}
           开始
         </StartButton>
         {open && (

@@ -1,0 +1,7 @@
+{
+  "name": "可移动磁盘",
+  "type": "placeholder",
+  "icon": "drive-removable",
+  "description": "点击挂载可移动磁盘",
+  "mountable": true
+}

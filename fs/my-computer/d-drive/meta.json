@@ -1,0 +1,9 @@
+{
+  "name": "D:",
+  "type": "drive",
+  "icon": "drive",
+  "description": "本地磁盘 (D:)",
+  "driveType": "fixed",
+  "totalSpace": "512GB",
+  "freeSpace": "256GB"
+}

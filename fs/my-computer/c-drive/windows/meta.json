@@ -1,0 +1,7 @@
+{
+  "name": "Windows",
+  "type": "folder",
+  "icon": "folder",
+  "system": true,
+  "description": "Windows 系统目录"
+}

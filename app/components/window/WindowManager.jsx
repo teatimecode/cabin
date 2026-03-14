@@ -4,131 +4,8 @@ import Window from './Window';
 import { AppType } from '../../config/apps';
 import FileExplorer from '../app/FileExplorer';
 import TextEditor from '../app/TextEditor';
-import { getFileContent } from '../../../content';
-
-// 模拟文件系统（仅包含结构，内容从外部文件加载）
-const FileSystem = {
-  '/': {
-    type: 'folder',
-    name: '桌面',
-    children: ['my-blog', 'my-documents', 'my-pictures', 'my-computer', 'recycle-bin'],
-  },
-  '/my-blog': {
-    type: 'folder',
-    name: '我的博客',
-    children: ['hello-world', 'tech-notes', 'life-diary', 'win95-style-website'],
-  },
-  '/my-blog/hello-world': {
-    type: 'file',
-    name: 'Hello World.txt',
-    app: 'notepad',
-    postId: 'hello-world',
-  },
-  '/my-blog/tech-notes': {
-    type: 'file',
-    name: '技术笔记.txt',
-    app: 'notepad',
-    postId: 'tech-notes',
-  },
-  '/my-blog/life-diary': {
-    type: 'file',
-    name: '生活日记.txt',
-    app: 'notepad',
-    postId: 'life-diary',
-  },
-  '/my-blog/win95-style-website': {
-    type: 'file',
-    name: 'Win95风格网站.txt',
-    app: 'notepad',
-    postId: 'win95-style-website',
-  },
-  '/my-documents': {
-    type: 'folder',
-    name: '我的文档',
-    children: ['readme', 'notes'],
-  },
-  '/my-documents/readme': {
-    type: 'file',
-    name: 'README.txt',
-    app: 'notepad',
-    postId: 'readme',
-  },
-  '/my-documents/notes': {
-    type: 'file',
-    name: '便签.txt',
-    app: 'notepad',
-    postId: 'notes',
-  },
-  '/my-pictures': {
-    type: 'folder',
-    name: '我的图片',
-    children: [],
-  },
-  '/my-computer': {
-    type: 'folder',
-    name: '我的电脑',
-    children: ['c-drive', 'd-drive'],
-    icon: 'my-computer',
-  },
-  '/my-computer/c-drive': {
-    type: 'folder',
-    name: 'C:',
-    children: ['windows', 'program-files', 'users'],
-    icon: 'my-computer',
-  },
-  '/my-computer/c-drive/windows': {
-    type: 'folder',
-    name: 'Windows',
-    children: [],
-  },
-  '/my-computer/c-drive/program-files': {
-    type: 'folder',
-    name: 'Program Files',
-    children: [],
-  },
-  '/my-computer/c-drive/users': {
-    type: 'folder',
-    name: 'Users',
-    children: ['guest', 'admin'],
-  },
-  '/my-computer/c-drive/users/guest': {
-    type: 'folder',
-    name: 'Guest',
-    children: [],
-  },
-  '/my-computer/c-drive/users/admin': {
-    type: 'folder',
-    name: 'Admin',
-    children: ['desktop', 'documents', 'downloads'],
-  },
-  '/my-computer/c-drive/users/admin/desktop': {
-    type: 'folder',
-    name: 'Desktop',
-    children: [],
-  },
-  '/my-computer/c-drive/users/admin/documents': {
-    type: 'folder',
-    name: 'Documents',
-    children: [],
-  },
-  '/my-computer/c-drive/users/admin/downloads': {
-    type: 'folder',
-    name: 'Downloads',
-    children: [],
-  },
-  '/my-computer/d-drive': {
-    type: 'folder',
-    name: 'D:',
-    children: [],
-    icon: 'my-computer',
-  },
-  '/recycle-bin': {
-    type: 'folder',
-    name: '回收站',
-    children: [],
-    icon: 'recycle-bin',
-  },
-};
+import { FSProvider, useFileSystem } from '../../lib/fs/FSContext';
+import { getFileContentById } from '../../lib/fs';
 
 const Container = styled.div`
   position: absolute;
@@ -139,14 +16,15 @@ const Container = styled.div`
   overflow: hidden;
 `;
 
-class WindowManager extends React.PureComponent {
+/**
+ * 窗口管理器内部组件（使用Context）
+ */
+class WindowManagerInner extends React.PureComponent {
   state = {
     windows: [],
     activeWindowId: null,
     nextZIndex: 1,
   };
-
-  static FileSystem = FileSystem;
 
   openWindow = (app) => {
     const { windows, nextZIndex } = this.state;
@@ -261,11 +139,12 @@ class WindowManager extends React.PureComponent {
     return this.state.activeWindowId;
   };
 
-  handleOpenFile = (file) => {
+  handleOpenFile = async (file) => {
     const { windows, nextZIndex } = this.state;
+    const { fileSystem, getFileContent } = this.props;
 
     // 如果是文件夹，打开新的文件浏览器窗口
-    if (file.type === 'folder') {
+    if (file.type === 'folder' || file.type === 'drive' || file.type === 'root') {
       const newWindow = {
         id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         appId: `folder-${file.path}`,
@@ -286,6 +165,12 @@ class WindowManager extends React.PureComponent {
       return;
     }
 
+    // 可挂载占位符
+    if (file.type === 'placeholder' && file.mountable) {
+      // 在FileExplorer中处理挂载
+      return;
+    }
+
     // 查找是否已有该文件的窗口
     const existingWindow = windows.find(w => w.appId === 'notepad' && w.fileId === file.postId);
     if (existingWindow) {
@@ -293,14 +178,21 @@ class WindowManager extends React.PureComponent {
       return;
     }
 
-    // 从外部内容获取文件内容
-    const content = getFileContent(file.postId);
+    // 获取文件内容
+    let content = '';
+    if (file.postId) {
+      // 通过postId获取内容（兼容旧代码）
+      content = getFileContentById(file.postId);
+    } else if (file.path) {
+      // 通过路径获取内容
+      content = await getFileContent(file.path);
+    }
 
     // 打开记事本窗口
     const newWindow = {
       id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       appId: 'notepad',
-      fileId: file.postId,
+      fileId: file.postId || file.path,
       title: file.name,
       app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD, iconName: 'notepad' },
       content: content,
@@ -325,15 +217,63 @@ class WindowManager extends React.PureComponent {
     }
   };
 
+  // 新建文件
+  handleNewFile = (windowId) => {
+    const { windows, nextZIndex } = this.state;
+    
+    // 创建新的记事本窗口
+    const newWindow = {
+      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      appId: 'notepad',
+      fileId: null,
+      title: '无标题',
+      app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD, iconName: 'notepad' },
+      content: '',
+      icon: 'notepad',
+      zIndex: nextZIndex,
+      isMinimized: false,
+      isMaximized: false,
+    };
+
+    this.setState({
+      windows: [...windows, newWindow],
+      activeWindowId: newWindow.id,
+      nextZIndex: nextZIndex + 1,
+    });
+  };
+
+  // 保存文件内容
+  handleSaveFile = (windowId, content) => {
+    const { windows } = this.state;
+    const window = windows.find(w => w.id === windowId);
+    if (window) {
+      // 更新窗口内容
+      const newWindows = windows.map(w => 
+        w.id === windowId ? { ...w, content } : w
+      );
+      this.setState({ windows: newWindows });
+    }
+  };
+
+  // 更新窗口标题
+  updateWindowTitle = (windowId, title) => {
+    const { windows } = this.state;
+    const newWindows = windows.map(w => 
+      w.id === windowId ? { ...w, title } : w
+    );
+    this.setState({ windows: newWindows });
+  };
+
   getWindowContent = (window) => {
-    const { app, path, content, title } = window;
+    const { app, path, content, title, id } = window;
+    const { fileSystem } = this.props;
 
     switch (app.type) {
       case AppType.FOLDER:
       case AppType.EXPLORER:
         return (
           <FileExplorer
-            fileSystem={FileSystem}
+            fileSystem={fileSystem}
             initialPath={path || '/'}
             onOpenItem={this.handleOpenFile}
           />
@@ -344,7 +284,13 @@ class WindowManager extends React.PureComponent {
             content={content || ''}
             fileName={title || '无标题'}
             showStatusBar={true}
-            onClose={this.handleClose}
+            onClose={() => this.closeWindow(id)}
+            onNew={() => this.handleNewFile(id)}
+            onSave={(newContent) => this.handleSaveFile(id, newContent)}
+            onOpen={() => {
+              // 打开文件选择器 - 这里可以扩展为显示文件对话框
+              // 暂时通过打开新窗口实现
+            }}
           />
         );
       default:
@@ -377,6 +323,52 @@ class WindowManager extends React.PureComponent {
       </Container>
     );
   }
+}
+
+/**
+ * 窗口管理器包装组件（提供Context）
+ */
+function WindowManagerWrapper(props) {
+  const fsContext = useFileSystem();
+  
+  return (
+    <WindowManagerInner
+      {...props}
+      fileSystem={fsContext.fileSystem}
+      getFileContent={fsContext.getFileContent}
+    />
+  );
+}
+
+/**
+ * 窗口管理器主组件
+ */
+class WindowManager extends React.PureComponent {
+  render() {
+    return (
+      <FSProvider>
+        <WindowManagerWrapper {...this.props} />
+      </FSProvider>
+    );
+  }
+
+  // 暴露方法供外部调用
+  getWindows = () => {
+    // 通过ref调用
+    return [];
+  };
+
+  getActiveWindowId = () => {
+    return null;
+  };
+
+  restoreWindow = (windowId) => {
+    // 通过ref调用
+  };
+
+  openFolderInNewWindow = (folder) => {
+    // 通过ref调用
+  };
 }
 
 export default WindowManager;

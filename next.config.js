@@ -20,6 +20,32 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+
+  // Webpack 配置
+  webpack: (config, { isServer }) => {
+    // 添加对 .md 文件的原始导入支持
+    config.module.rules.push({
+      test: /\.md$/,
+      oneOf: [
+        {
+          resourceQuery: /raw/,
+          type: 'asset/source',
+        },
+        {
+          type: 'asset/source',
+        },
+      ],
+    });
+
+    // 添加对 ?raw 查询参数的支持
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+    };
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;
