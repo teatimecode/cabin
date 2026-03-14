@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { ThemeProvider } from "styled-components";
+import PropTypes from 'prop-types';
 
 import ShortCutContainer from 'app/components/window/ShortCutContainer';
 import WindowManager from 'app/components/window/WindowManager';
@@ -17,24 +18,46 @@ const DesktopWrapper = styled.div`
 `;
 
 class Desktop extends React.Component {
-  state = {
-    windowManagerRef: null,
+  static propTypes = {
+    config: PropTypes.shape({
+      theme: PropTypes.object.isRequired,
+      background: PropTypes.string.isRequired,
+      apps: PropTypes.arrayOf(PropTypes.object).isRequired,
+    }).isRequired,
   };
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      isMounted: false,
+    };
+    // 将 windowManagerRef 作为实例属性而不是状态
+    this.windowManagerRef = null;
+  }
+
   handleOpenApp = (app) => {
-    const { windowManagerRef } = this.state;
-    if (windowManagerRef) {
-      windowManagerRef.openWindow(app);
+    if (this.windowManagerRef && this.state.isMounted) {
+      this.windowManagerRef.openWindow(app);
     }
   };
 
   setWindowManagerRef = (ref) => {
-    this.setState({ windowManagerRef: ref });
+    // 只有当ref真正改变时才更新
+    if (ref !== this.windowManagerRef) {
+      this.windowManagerRef = ref;
+    }
   };
+
+  componentDidMount() {
+    this.setState({ isMounted: true });
+  }
+
+  componentWillUnmount() {
+    this.setState({ isMounted: false }); // 组件即将卸载时设置为false
+  }
 
   render() {
     const { config } = this.props;
-    const { windowManagerRef } = this.state;
 
     return (
       <ThemeProvider theme={config.theme}>
@@ -50,12 +73,12 @@ class Desktop extends React.Component {
           </DesktopWrapper>
           <TaskBar 
             config={config} 
-            windowManager={windowManagerRef}
+            windowManager={this.windowManagerRef}
           />
         </FSProvider>
       </ThemeProvider>
-    )
-  };
+    );
+  }
 }
 
 

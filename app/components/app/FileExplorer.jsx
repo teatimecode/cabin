@@ -269,7 +269,7 @@ function FileExplorerContent({ initialPath, onOpenItem, fileSystem: propFileSyst
         {/* 可挂载区域显示提示 */}
         {isMountableArea && items.filter(i => i.type === 'placeholder').length > 0 && (
           <MountHint>
-            <div>点击"挂载可移动磁盘..."或</div>
+            <div>点击&quot;挂载可移动磁盘...&quot;或</div>
             <MountButton 
               onClick={handleMountDisk}
               disabled={mounting || !isSupported}

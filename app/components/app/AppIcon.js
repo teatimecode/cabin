@@ -70,10 +70,20 @@ class AppIcon extends React.PureComponent {
       // 根据应用类型返回默认图标
       switch (app.type) {
         case 'folder':
-        case 'explorer':
+        case 'FOLDER':
           return getIcon('folder', { size: 'large' });
+        case 'explorer':
+        case 'EXPLORER':
+          return getIcon('explorer', { size: 'large' });
         case 'notepad':
+        case 'NOTEPAD':
           return getIcon('notepad', { size: 'large' });
+        case 'blog':
+        case 'BLOG':
+          return getIcon('blog', { size: 'large' });
+        case 'drive':
+        case 'DRIVE':
+          return getIcon('drive', { size: 'large' });
         default:
           return getIcon('document', { size: 'large' });
       }

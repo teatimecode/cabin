@@ -1,8 +1,9 @@
-import React from "react";
-import { createGlobalStyle } from "styled-components";
+import React from 'react';
+import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { styleReset } from "react95";
 import Desktop from 'app/desktop';
 import MainConfig from 'app/config/main';
+import { FSProvider } from 'app/lib/fs/FSContext';
 
 const ResetStyles = createGlobalStyle`
   ${styleReset}
@@ -27,8 +28,17 @@ const FullScreenStyle = {
   left: '0',
 };
 
-export default props =>
+const HomePage = (props) => (
   <div className="App" style={FullScreenStyle}>
     <ResetStyles />
-    <Desktop config={MainConfig}/>
+    <ThemeProvider theme={MainConfig.theme}>
+      <FSProvider>
+        <Desktop config={MainConfig}/>
+      </FSProvider>
+    </ThemeProvider>
   </div>
+);
+
+HomePage.displayName = 'HomePage';
+
+export default HomePage;
