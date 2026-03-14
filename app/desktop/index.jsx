@@ -18,6 +18,7 @@ const DesktopWrapper = styled.div`
 class Desktop extends React.Component {
   state = {
     windowManagerRef: null,
+    isMounted: true, // 添加挂载状态标记
   };
 
   handleOpenApp = (app) => {
@@ -28,8 +29,19 @@ class Desktop extends React.Component {
   };
 
   setWindowManagerRef = (ref) => {
-    this.setState({ windowManagerRef: ref });
+    // 只在组件挂载时更新状态
+    if (this.state.isMounted) {
+      this.setState({ windowManagerRef: ref });
+    }
   };
+
+  componentDidMount() {
+    this.setState({ isMounted: true });
+  }
+
+  componentWillUnmount() {
+    this.setState({ isMounted: false });
+  }
 
   render() {
     const { config } = this.props;
