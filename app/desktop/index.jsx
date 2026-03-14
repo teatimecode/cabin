@@ -7,6 +7,7 @@ import ShortCutContainer from 'app/components/window/ShortCutContainer';
 import WindowManager from 'app/components/window/WindowManager';
 import TaskBar from './TaskBar';
 import { FSProvider } from 'app/lib/fs/FSContext';
+import { StaticFileSystem } from 'app/lib/fs/staticConfig';
 
 const DesktopWrapper = styled.div`
   position: absolute;
@@ -30,6 +31,7 @@ class Desktop extends React.Component {
     super(props);
     this.state = {
       isMounted: false,
+      desktopItems: [],
     };
     // 将 windowManagerRef 作为实例属性而不是状态
     this.windowManagerRef = null;
@@ -50,6 +52,27 @@ class Desktop extends React.Component {
 
   componentDidMount() {
     this.setState({ isMounted: true });
+    
+    // 从文件系统根目录获取桌面项目
+    const rootNode = StaticFileSystem['/'];
+    if (rootNode && rootNode.children) {
+      const desktopItems = rootNode.children.map(childId => {
+        const childPath = `/${childId}`;
+        const childItem = StaticFileSystem[childPath];
+        if (childItem) {
+          return {
+            id: childId,
+            name: childItem.name,
+            type: childItem.type,
+            iconName: childItem.icon,
+            path: childPath,
+          };
+        }
+        return null;
+      }).filter(Boolean); // 过滤掉null项
+      
+      this.setState({ desktopItems });
+    }
   }
 
   componentWillUnmount() {
@@ -58,6 +81,7 @@ class Desktop extends React.Component {
 
   render() {
     const { config } = this.props;
+    const { desktopItems } = this.state;
 
     return (
       <ThemeProvider theme={config.theme}>
@@ -67,7 +91,7 @@ class Desktop extends React.Component {
               ref={this.setWindowManagerRef}
             />
             <ShortCutContainer
-              apps={config.apps}
+              apps={desktopItems}
               onOpenApp={this.handleOpenApp}
             />
           </DesktopWrapper>
