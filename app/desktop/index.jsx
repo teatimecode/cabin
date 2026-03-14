@@ -5,6 +5,7 @@ import { ThemeProvider } from "styled-components";
 import ShortCutContainer from 'app/components/window/ShortCutContainer';
 import WindowManager from 'app/components/window/WindowManager';
 import TaskBar from './TaskBar';
+import { FSProvider } from 'app/lib/fs/FSContext';
 
 const DesktopWrapper = styled.div`
   position: absolute;
@@ -18,7 +19,6 @@ const DesktopWrapper = styled.div`
 class Desktop extends React.Component {
   state = {
     windowManagerRef: null,
-    isMounted: true, // 添加挂载状态标记
   };
 
   handleOpenApp = (app) => {
@@ -29,19 +29,8 @@ class Desktop extends React.Component {
   };
 
   setWindowManagerRef = (ref) => {
-    // 只在组件挂载时更新状态
-    if (this.state.isMounted) {
-      this.setState({ windowManagerRef: ref });
-    }
+    this.setState({ windowManagerRef: ref });
   };
-
-  componentDidMount() {
-    this.setState({ isMounted: true });
-  }
-
-  componentWillUnmount() {
-    this.setState({ isMounted: false });
-  }
 
   render() {
     const { config } = this.props;
@@ -49,19 +38,21 @@ class Desktop extends React.Component {
 
     return (
       <ThemeProvider theme={config.theme}>
-        <DesktopWrapper style={{ background: config.background }}>
-          <WindowManager
-            ref={this.setWindowManagerRef}
+        <FSProvider>
+          <DesktopWrapper style={{ background: config.background }}>
+            <WindowManager
+              ref={this.setWindowManagerRef}
+            />
+            <ShortCutContainer
+              apps={config.apps}
+              onOpenApp={this.handleOpenApp}
+            />
+          </DesktopWrapper>
+          <TaskBar 
+            config={config} 
+            windowManager={windowManagerRef}
           />
-          <ShortCutContainer
-            apps={config.apps}
-            onOpenApp={this.handleOpenApp}
-          />
-        </DesktopWrapper>
-        <TaskBar 
-          config={config} 
-          windowManager={windowManagerRef}
-        />
+        </FSProvider>
       </ThemeProvider>
     )
   };
