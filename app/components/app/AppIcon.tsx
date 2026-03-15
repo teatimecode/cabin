@@ -1,6 +1,14 @@
 import React from 'react';
 import styled from 'styled-components';
 import { getIcon } from '../icons';
+import type { AppConfig } from '../../config/apps';
+
+interface AppIconProps {
+  app: AppConfig;
+  selected?: boolean;
+  onOpen?: (app: AppConfig) => void;
+  onSelect?: (app: AppConfig, isMultiSelect: boolean) => void;
+}
 
 const IconWrapper = styled.div`
   display: flex;
@@ -29,7 +37,7 @@ const IconImage = styled.div`
   justify-content: center;
 `;
 
-const IconLabel = styled.span`
+const IconLabel = styled.span<{ selected?: boolean }>`
   font-size: 11px;
   font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
   color: #fff;
@@ -42,7 +50,7 @@ const IconLabel = styled.span`
   text-shadow: 1px 1px 1px #000;
 `;
 
-class AppIcon extends React.PureComponent {
+class AppIcon extends React.PureComponent<AppIconProps> {
   handleDoubleClick = () => {
     const { app, onOpen } = this.props;
     if (onOpen) {
@@ -50,7 +58,7 @@ class AppIcon extends React.PureComponent {
     }
   };
 
-  handleClick = (e) => {
+  handleClick = (e: React.MouseEvent) => {
     const { app, onSelect } = this.props;
     if (onSelect) {
       onSelect(app, e.ctrlKey);

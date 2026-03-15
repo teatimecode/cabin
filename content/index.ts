@@ -2,7 +2,7 @@
 // 将文件ID映射到实际的内容字符串
 
 // 博客文章内容
-const posts = {
+const posts: Record<string, string> = {
   'hello-world': `# Hello World
 
 欢迎来到我的 Win95 风格博客！
@@ -111,7 +111,7 @@ module.exports = {
 };
 
 // 文档内容
-const pages = {
+const pages: Record<string, string> = {
   'readme': `# 欢迎使用
 
 这是"我的文档"文件夹。
@@ -125,13 +125,20 @@ const pages = {
 };
 
 // 合并所有内容
-export const contentFiles = {
+export const contentFiles: Record<string, string> = {
   ...posts,
   ...pages,
 };
 
+export interface FileMetadata {
+  name: string;
+  type: 'file' | 'folder';
+  app: string;
+  parentId: string;
+}
+
 // 文件元数据
-export const fileMetadata = {
+export const fileMetadata: Record<string, FileMetadata> = {
   // 博客文章
   'hello-world': {
     name: 'Hello World.txt',
@@ -157,7 +164,7 @@ export const fileMetadata = {
     app: 'notepad',
     parentId: 'my-blog',
   },
-  
+
   // 文档
   'readme': {
     name: 'README.txt',
@@ -174,12 +181,12 @@ export const fileMetadata = {
 };
 
 // 获取文件内容
-export function getFileContent(fileId) {
+export function getFileContent(fileId: string): string {
   return contentFiles[fileId] || '';
 }
 
 // 获取所有博客文章
-export function getAllPosts() {
+export function getAllPosts(): Array<{ id: string } & FileMetadata> {
   return Object.keys(posts).map(id => ({
     id,
     ...fileMetadata[id],

@@ -4,8 +4,10 @@
  */
 
 import { FileSystem, NodeType } from './FileSystem';
+import type { FSNode } from './FileSystem';
 import { StaticFileSystem, getFileContent, getFileContentById } from './staticConfig';
 import RemovableDiskManager, { isFileSystemAccessSupported } from './RemovableDiskManager';
+import type { MountOptions } from './RemovableDiskManager';
 
 // 创建全局文件系统实例
 const globalFileSystem = new FileSystem();
@@ -20,101 +22,63 @@ const removableDiskManager = new RemovableDiskManager(globalFileSystem);
  * 文件系统服务
  */
 const FSService = {
-  // 文件系统实例
   fs: globalFileSystem,
-  
-  // 可移动磁盘管理器
   removable: removableDiskManager,
 
-  /**
-   * 获取节点
-   */
-  getNode(path) {
+  getNode(path: string): FSNode | undefined {
     return this.fs.getNode(path);
   },
 
-  /**
-   * 列出目录内容
-   */
-  listDirectory(path) {
+  listDirectory(path: string): FSNode[] {
     return this.fs.listDirectory(path);
   },
 
-  /**
-   * 获取文件内容
-   */
-  async getFileContent(path) {
+  async getFileContent(path: string): Promise<string> {
     const node = this.fs.getNode(path);
-    
     if (!node) return '';
-    
+
     // 如果是可移动磁盘上的文件
-    if (node._handle || node._file) {
-      return this.removable.readFileContent(node);
+    const fileNode = node as any;
+    if (fileNode._handle || fileNode._file) {
+      return this.removable.readFileContent(fileNode);
     }
-    
-    // 静态文件系统
+
     return getFileContent(path);
   },
 
-  /**
-   * 通过postId获取文件内容
-   */
-  getFileContentById(postId) {
+  getFileContentById(postId: string): string {
     return getFileContentById(postId);
   },
 
-  /**
-   * 挂载可移动磁盘
-   */
-  async mountRemovableDisk(options = {}) {
+  async mountRemovableDisk(options: MountOptions = {}) {
     return this.removable.mountDirectory(options);
   },
 
-  /**
-   * 卸载可移动磁盘
-   */
-  async unmountRemovableDisk(mountPath) {
+  async unmountRemovableDisk(mountPath: string): Promise<boolean> {
     return this.removable.unmountDrive(mountPath);
   },
 
-  /**
-   * 检查是否支持File System Access API
-   */
-  isFileSystemAccessSupported() {
+  isFileSystemAccessSupported(): boolean {
     return isFileSystemAccessSupported();
   },
 
-  /**
-   * 获取挂载的驱动器列表
-   */
   getMountedDrives() {
     return this.removable.getMountedDrives();
   },
 
-  /**
-   * 搜索文件
-   */
-  searchFiles(query, startPath = '/') {
+  searchFiles(query: string, startPath = '/'): FSNode[] {
     return this.fs.findNode(query, startPath);
   },
 
-  /**
-   * 添加变更监听
-   */
-  addChangeListener(callback) {
+  addChangeListener(callback: (event: any) => void): () => void {
     return this.removable.addChangeListener(callback);
   },
 
-  /**
-   * 获取文件系统JSON结构（兼容旧代码）
-   */
   toJson() {
     return this.fs.toJson();
   },
 };
 
-// 导出类型和工具
 export { FileSystem, NodeType };
 export { StaticFileSystem, getFileContent, getFileContentById };
 export { RemovableDiskManager, isFileSystemAccessSupported };

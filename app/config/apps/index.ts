@@ -1,14 +1,24 @@
 // 应用程序配置
 // 定义桌面上的应用图标
 
-export const AppType = {
+export type AppTypeKey = 'FOLDER' | 'NOTEPAD' | 'EXPLORER' | 'BLOG';
+
+export const AppType: Record<AppTypeKey, string> = {
   FOLDER: 'folder',
   NOTEPAD: 'notepad',
   EXPLORER: 'explorer',
   BLOG: 'blog',
 };
 
-const apps = [
+export interface AppConfig {
+  id: string;
+  name: string;
+  type: string;
+  iconName: string;
+  path?: string;
+}
+
+const apps: AppConfig[] = [
   {
     id: 'explorer',
     name: '文件资源管理器',

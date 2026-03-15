@@ -1,1 +1,7 @@
-fix: WindowManager ref forwarding issue
+fix: build configuration and type errors
+
+- Convert next.config.ts to next.config.js (Next.js compatibility)
+- Fix ESLint rule @typescript-eslint/no-unused-vars not found
+- Fix styled-components transient props ($shadow -> shadow)
+- Fix TypeScript type error in FileSystem.ts children handling
+- Fix icon variant type in getIcon function

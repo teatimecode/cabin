@@ -3,17 +3,22 @@
  * 从 fs/ 目录结构生成
  */
 
-// 复用现有的内容模块
 import { contentFiles, getFileContent as getExistingContent } from '../../../content';
+import type { NodeData } from './FileSystem';
+
+export type StaticFSNode = NodeData & {
+  mountable?: boolean;
+  system?: boolean;
+};
 
 // 默认的静态文件系统结构
-export const StaticFileSystem = {
+export const StaticFileSystem: Record<string, StaticFSNode> = {
   '/': {
     type: 'folder',
     name: '桌面',
     children: ['my-blog', 'my-documents', 'my-pictures', 'my-computer', 'recycle-bin', 'removable'],
   },
-  
+
   // 我的博客
   '/my-blog': {
     type: 'folder',
@@ -178,7 +183,7 @@ export const StaticFileSystem = {
 /**
  * 获取文件内容
  */
-export function getFileContent(filePath) {
+export function getFileContent(filePath: string): string {
   const node = StaticFileSystem[filePath];
   if (node && node.postId) {
     return getExistingContent(node.postId);
@@ -189,7 +194,7 @@ export function getFileContent(filePath) {
 /**
  * 获取文件内容的替代方法（用于postId查找）
  */
-export function getFileContentById(postId) {
+export function getFileContentById(postId: string): string {
   return getExistingContent(postId) || '';
 }
 
