@@ -1,9 +1,11 @@
+"use client";
+
 /**
  * 文件系统 React Context
  * 提供全局文件系统状态和操作
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import FSService from './index';
 import { isFileSystemAccessSupported } from './RemovableDiskManager';
 import type { FSNode, DriveNode } from './FileSystem';
@@ -24,9 +26,9 @@ export interface FSContextValue {
 
 const FSContext = createContext<FSContextValue | null>(null);
 
-interface FSProviderProps {
-  children: ReactNode;
-}
+type FSProviderProps = {
+  children: React.ReactNode;
+};
 
 /**
  * 文件系统Provider组件
@@ -48,21 +50,11 @@ export function FSProvider({ children }: FSProviderProps) {
   }, []);
 
   const mountDisk = useCallback(async (options: Record<string, any> = {}) => {
-    try {
-      return await FSService.mountRemovableDisk(options);
-    } catch (error) {
-      console.error('挂载磁盘失败:', error);
-      throw error;
-    }
+    return await FSService.mountRemovableDisk(options);
   }, []);
 
   const unmountDisk = useCallback(async (mountPath: string) => {
-    try {
-      await FSService.unmountRemovableDisk(mountPath);
-    } catch (error) {
-      console.error('卸载磁盘失败:', error);
-      throw error;
-    }
+    await FSService.unmountRemovableDisk(mountPath);
   }, []);
 
   const getNode = useCallback((path: string) => {
@@ -92,7 +84,8 @@ export function FSProvider({ children }: FSProviderProps) {
     listDirectory,
     getFileContent,
     searchFiles,
-    fileSystem: FSService.toJson(),
+    // fileSystem 使用 fs 实例代替 toJson
+    fileSystem: FSService.fs as any,
   };
 
   return (
@@ -117,15 +110,15 @@ export function useFileSystem(): FSContextValue {
  * 使用目录内容Hook
  */
 export function useDirectory(path: string): FSNode[] {
-  const { listDirectory, refreshKey: _ } = useFileSystem();
+  const { listDirectory } = useFileSystem();
   return listDirectory(path);
 }
 
-export interface UseFileContentResult {
+export type UseFileContentResult = {
   content: string;
   loading: boolean;
   error: Error | null;
-}
+};
 
 /**
  * 使用文件内容Hook
@@ -151,14 +144,14 @@ export function useFileContent(path: string): UseFileContentResult {
   return { content, loading, error };
 }
 
-export interface UseRemovableDiskResult {
+export type UseRemovableDiskResult = {
   isSupported: boolean;
   mountedDrives: DriveNode[];
   mounting: boolean;
   error: string | null;
   mount: (options?: Record<string, any>) => Promise<DriveNode | null>;
   unmount: (mountPath: string) => Promise<void>;
-}
+};
 
 /**
  * 使用可移动磁盘Hook

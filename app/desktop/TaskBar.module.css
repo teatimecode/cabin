@@ -1,0 +1,166 @@
+/* TaskBar 主容器 */
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #c0c0c0;
+  border-top: 2px solid #fff;
+  z-index: 1000;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 4px;
+  height: 38px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 4px;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 开始按钮 - Windows 95 3D 按钮样式 */
+.startButton {
+  font-weight: bold;
+  font-size: 12px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  /* Windows 95 凸起按钮效果 */
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+  border-right: 2px solid #000000;
+  background-color: #c0c0c0;
+  color: #000000;
+  cursor: pointer;
+}
+
+/* 开始按钮按下状态 - Windows 95 凹陷效果 */
+.startButton:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+  background-color: #c0c0c0;
+}
+
+/* 开始按钮激活状态（菜单打开）- 保持凸起但背景变蓝 */
+.startButtonActive {
+  background-color: #0a246a;
+  color: white;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+  border-right: 2px solid #000000;
+}
+
+/* 窗口按钮容器 */
+.windowButtonsContainer {
+  display: flex;
+  flex: 1;
+  margin-left: 4px;
+  gap: 2px;
+  overflow: hidden;
+}
+
+/* 窗口按钮 */
+.windowButton {
+  font-size: 11px;
+  padding: 2px 6px;
+  max-width: 160px;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  /* Windows 95 凸起按钮效果 */
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+  border-right: 2px solid #000000;
+  background-color: #c0c0c0;
+  color: #000000;
+}
+
+.windowButton:hover {
+  background-color: #d0d0d0;
+}
+
+.windowButton:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+}
+
+.windowButtonActive {
+  background-color: #0a246a;
+  color: white;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+  border-right: 2px solid #000000;
+}
+
+.windowButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 时钟区域 */
+.clock {
+  padding: 2px 8px;
+  background: #c0c0c0;
+  font-size: 11px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  /* Windows 95 凸起效果 */
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+  border-right: 2px solid #000000;
+}
+
+/* 分隔线 */
+.dividerLine {
+  width: 2px;
+  height: 22px;
+  background: linear-gradient(to right, #808080, #fff);
+  margin: 0 4px;
+}
+
+/* 下拉菜单 */
+.menuWrapper {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  min-width: 180px;
+  margin-bottom: 2px;
+  z-index: 1001;
+}

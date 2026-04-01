@@ -1,46 +1,12 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { MenuList, MenuListItem, Separator, Frame, Button } from 'react95';
+import { Frame, List } from '@react95/core';
+import MarkdownRenderer from './MarkdownRenderer';
+import { useVirtualStorage } from '../../lib/vfs/hooks';
 
-interface TextEditorProps {
-  content?: string;
-  fileName?: string;
-  showStatusBar?: boolean;
-  onClose?: () => void;
-  onNew?: () => void;
-  onSave?: (content: string) => void;
-  onOpen?: () => void;
-  onAction?: (action: string) => void;
-}
-
-interface TextEditorState {
-  menuOpen: string | null;
-  wordWrap: boolean;
-  showStatusBar: boolean;
-  zoom: number;
-  showAbout: boolean;
-  showSaveConfirm: boolean;
-  pendingAction: string | null;
-  editedContent: string;
-  isModified: boolean;
-  cursorLine: number;
-  cursorColumn: number;
-}
-
-interface MenuItem {
-  label?: string;
-  action?: string;
-  shortcut?: string;
-  type?: 'divider';
-  disabled?: boolean;
-}
-
-interface Menu {
-  name: string;
-  items: MenuItem[];
-}
-
-const Container = styled.div`
+const EditorContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -49,580 +15,303 @@ const Container = styled.div`
 
 const MenuBar = styled.div`
   display: flex;
+  padding: 2px 4px;
   background: #c0c0c0;
-  padding: 2px 0;
+  gap: 8px;
+  position: relative;
 `;
 
-const MenuButton = styled.button`
-  background: transparent;
-  border: none;
+const MenuItem = styled.div`
   padding: 2px 8px;
+  font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
   cursor: pointer;
-  font-size: 12px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-  height: 20px;
-
-  &:hover {
-    background: #000080;
-    color: #fff;
-  }
-
-  &:active, &[data-open="true"] {
-    background: #000080;
-    color: #fff;
-  }
-`;
-
-const DropdownMenu = styled(MenuList)`
-  min-width: 150px;
-`;
-
-const MenuItemStyled = styled(MenuListItem)`
-  font-size: 12px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-  padding: 0 8px;
-  height: 20px !important;
-  line-height: 20px !important;
-  min-height: 20px;
-  display: flex;
-  justify-content: space-between;
+  user-select: none;
   
-  &.disabled {
-    color: #808080;
-    pointer-events: none;
+  &:hover {
+    background: #0a246a;
+    color: #fff;
   }
 `;
 
-const Shortcut = styled.span`
-  color: #808080;
-  margin-left: 16px;
-`;
-
-const EditorArea = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid #808080;
-`;
-
-const EditorTextarea = styled.textarea<{ wordWrap?: boolean }>`
-  flex: 1;
-  margin: 4px;
+const DropdownMenu = styled.div<{ show: boolean }>`
+  display: ${props => props.show ? 'block' : 'none'};
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
   background: #fff;
-  padding: 8px;
   border: 2px solid;
   border-color: #808080 #fff #fff #808080;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  z-index: 1000;
+`;
+
+const Toolbar = styled.div`
+  display: flex;
+  padding: 4px;
+  background: #c0c0c0;
+  gap: 4px;
+  border-bottom: 1px solid #808080;
+`;
+
+const StyledButton = styled.button`
+  border: 1px solid #808080;
+  background: #c0c0c0;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  &:hover {
+    background: #d0d0d0;
+  }
+  &:active {
+    background: #a0a0a0;
+  }
+`;
+
+const EditorContent = styled.div`
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  overflow: hidden;
+`;
+
+const StyledTextArea = styled.textarea`
+  flex: 1;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  background: #fff;
+  font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
-  line-height: 1.5;
-  font-family: 'Fixedsys', 'Consolas', 'Courier New', monospace;
+  padding: 8px;
   resize: none;
   outline: none;
-  white-space: ${props => props.wordWrap ? 'pre-wrap' : 'pre'};
+`;
+
+const PreviewPane = styled(Frame as any)`
+  flex: 1;
+  margin-left: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
   overflow: auto;
 `;
 
 const StatusBar = styled.div`
   display: flex;
   justify-content: space-between;
-  padding: 2px 8px;
+  padding: 4px 8px;
   background: #c0c0c0;
+  border-top: 1px solid #fff;
   font-size: 11px;
   font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-  border-top: 1px solid #fff;
+  color: #666;
 `;
 
-const AboutOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-`;
+interface TextEditorProps {
+  initialContent?: string;
+  isPreview?: boolean;
+  filePath?: string;  // 新增：文件路径
+  onSave?: (content: string) => void;  // 新增：保存回调
+}
 
-const AboutDialog = styled(Frame)`
-  padding: 16px;
-  min-width: 300px;
-  text-align: center;
-`;
+const TextEditor: React.FC<TextEditorProps> = ({ 
+  initialContent = '', 
+  isPreview = false,
+  filePath,
+  onSave,
+}) => {
+  // 确保 content 始终是一个字符串，避免非受控到受控的警告
+  const [content, setContent] = useState(initialContent || '');
+  const [previewMode, setPreviewMode] = useState(isPreview);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isModified, setIsModified] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  // 使用虚拟存储 Hook
+  const { writeFile } = useVirtualStorage();
 
-const AboutTitle = styled.h3`
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  font-weight: bold;
-`;
+  // 如果初始内容改变，则更新状态（确保始终为字符串）
+  useEffect(() => {
+    setContent(initialContent || '');
+    setIsModified(false);
+  }, [initialContent]);
 
-const AboutText = styled.p`
-  margin: 8px 0;
-  font-size: 12px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-`;
-
-const DialogButton = styled(Button)`
-  margin-top: 16px;
-  min-width: 75px;
-`;
-
-const ConfirmDialog = styled(Frame)`
-  padding: 16px;
-  min-width: 300px;
-`;
-
-const ConfirmText = styled.p`
-  margin: 0 0 16px 0;
-  font-size: 12px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-`;
-
-class TextEditor extends React.PureComponent<TextEditorProps, TextEditorState> {
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
-
-  constructor(props: TextEditorProps) {
-    super(props);
-    this.textareaRef = React.createRef();
-    this.state = {
-      menuOpen: null,
-      wordWrap: true,
-      showStatusBar: true,
-      zoom: 100,
-      showAbout: false,
-      showSaveConfirm: false,
-      pendingAction: null,
-      editedContent: props.content || '',
-      isModified: false,
-      cursorLine: 1,
-      cursorColumn: 1,
-    };
-  }
-
-  componentDidUpdate(prevProps: TextEditorProps) {
-    if (prevProps.content !== this.props.content && !this.state.isModified) {
-      this.setState({ editedContent: this.props.content || '' });
+  const handleSave = () => {
+    if (filePath) {
+      // 使用虚拟存储保存
+      setIsSaving(true);
+      try {
+        const success = writeFile(filePath, content);
+        if (success) {
+          setIsModified(false);
+          alert('文件已保存到虚拟文件系统\n弹出时会询问是否导出到磁盘');
+        } else {
+          alert('保存失败');
+        }
+      } catch (error) {
+        // 静默处理错误，避免在生产环境显示错误信息
+      } finally {
+        setIsSaving(false);
+      }
+    } else if (onSave) {
+      // 使用回调保存（兼容旧版）
+      onSave(content);
+      alert('内容已保存');
+    } else {
+      // 无文件路径时的提示
+      alert('请使用"另存为"功能选择保存位置');
     }
-  }
-
-  handleMenuClick = (menuName: string) => {
-    this.setState(prevState => ({
-      menuOpen: prevState.menuOpen === menuName ? null : menuName,
-    }));
   };
 
-  handleMenuItemClick = (action: string) => {
-    this.setState({ menuOpen: null });
+  const handleNew = () => {
+    if (isModified && !window.confirm('当前内容有未保存的修改，确定要新建吗？')) {
+      return;
+    }
+    setContent('');
+    setIsModified(false);
+  };
 
-    switch (action) {
+  const handleCopy = () => {
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+      textarea.select();
+      document.execCommand('copy');
+    }
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setContent(prev => prev + text);
+      setIsModified(true);
+    } catch (err) {
+      alert('无法读取剪贴板内容');
+    }
+  };
+
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
+
+  const handleMenuClick = (menu: string) => {
+    setActiveMenu(activeMenu === menu ? null : menu);
+  };
+
+  const handleMenuAction = (action: string) => {
+    setActiveMenu(null);
+    switch(action) {
       case 'new':
-        this.handleNew();
-        break;
-      case 'open':
-        this.handleOpen();
+        handleNew();
         break;
       case 'save':
-        this.handleSave();
-        break;
-      case 'saveAs':
-        this.handleSaveAs();
-        break;
-      case 'exit':
-        this.handleExit();
-        break;
-      case 'undo':
-        document.execCommand('undo');
-        break;
-      case 'cut':
-        document.execCommand('cut');
+        handleSave();
         break;
       case 'copy':
-        document.execCommand('copy');
+        handleCopy();
         break;
       case 'paste':
-        if (navigator.clipboard) {
-          navigator.clipboard.readText().then(text => {
-            const textarea = this.textareaRef.current;
-            if (textarea) {
-              const start = textarea.selectionStart;
-              const end = textarea.selectionEnd;
-              const newContent = 
-                this.state.editedContent.substring(0, start) + 
-                text + 
-                this.state.editedContent.substring(end);
-              this.handleContentChange(newContent);
-              setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + text.length;
-              }, 0);
-            }
-          });
-        }
+        handlePaste();
         break;
-      case 'selectAll': {
-        const textarea = this.textareaRef.current;
-        if (textarea) {
-          textarea.select();
-        }
+      case 'preview':
+        togglePreview();
         break;
-      }
-      case 'delete':
-        document.execCommand('delete');
-        break;
-      case 'wordWrap':
-        this.setState(prev => ({ wordWrap: !prev.wordWrap }));
-        break;
-      case 'font':
-        alert('字体设置功能暂未实现');
-        break;
-      case 'statusBar':
-        this.setState(prev => ({ showStatusBar: !prev.showStatusBar }));
-        break;
-      case 'zoomIn':
-        this.setState(prev => ({ zoom: Math.min(prev.zoom + 10, 200) }));
-        break;
-      case 'zoomOut':
-        this.setState(prev => ({ zoom: Math.max(prev.zoom - 10, 50) }));
-        break;
-      case 'help':
-        alert('查看帮助：请访问 GitHub 仓库了解更多信息');
-        break;
-      case 'about':
-        this.setState({ showAbout: true });
-        break;
-      default: {
-        const { onAction } = this.props;
-        if (onAction) onAction(action);
-      }
     }
   };
 
-  handleContentChange = (newContent: string) => {
-    this.setState({ 
-      editedContent: newContent,
-      isModified: true,
-    });
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    setIsModified(true);
   };
 
-  handleCursorChange = () => {
-    const textarea = this.textareaRef.current;
-    if (!textarea) return;
+  // 计算行数
+  const lineCount = content.split('\n').length;
+  // 计算字符数
+  const charCount = content.length;
+  // 计算当前光标位置（简化版本）
+  const cursorPosition = 'Ln 1, Col 1';
 
-    const text = textarea.value.substring(0, textarea.selectionStart);
-    const lines = text.split('\n');
-    const line = lines.length;
-    const column = lines[lines.length - 1].length + 1;
+  // 点击其他地方关闭菜单
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
-    this.setState({ cursorLine: line, cursorColumn: column });
-  };
-
-  handleNew = () => {
-    if (this.state.isModified) {
-      this.setState({ showSaveConfirm: true, pendingAction: 'new' });
-    } else {
-      this.setState({ editedContent: '', isModified: false });
-      const { onNew } = this.props;
-      if (onNew) onNew();
-    }
-  };
-
-  handleOpen = () => {
-    if (this.state.isModified) {
-      this.setState({ showSaveConfirm: true, pendingAction: 'open' });
-    } else {
-      const { onOpen } = this.props;
-      if (onOpen) onOpen();
-    }
-  };
-
-  handleSave = () => {
-    const { onSave } = this.props;
-    if (onSave) {
-      onSave(this.state.editedContent);
-      this.setState({ isModified: false });
-    } else {
-      this.handleDownload();
-    }
-  };
-
-  handleSaveAs = () => {
-    this.handleDownload();
-  };
-
-  handleDownload = () => {
-    const { fileName } = this.props;
-    const blob = new Blob([this.state.editedContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName || '未命名.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    this.setState({ isModified: false });
-  };
-
-  handleExit = () => {
-    if (this.state.isModified) {
-      this.setState({ showSaveConfirm: true, pendingAction: 'exit' });
-    } else {
-      const { onClose } = this.props;
-      if (onClose) onClose();
-    }
-  };
-
-  handleConfirmSave = () => {
-    this.handleSave();
-    this.executePendingAction();
-  };
-
-  handleConfirmDontSave = () => {
-    this.executePendingAction();
-  };
-
-  handleConfirmCancel = () => {
-    this.setState({ showSaveConfirm: false, pendingAction: null });
-  };
-
-  executePendingAction = () => {
-    const { pendingAction } = this.state;
-    this.setState({ showSaveConfirm: false, isModified: false, pendingAction: null });
-
-    switch (pendingAction) {
-      case 'new': {
-        this.setState({ editedContent: '' });
-        const { onNew } = this.props;
-        if (onNew) onNew();
-        break;
-      }
-      case 'open': {
-        const { onOpen } = this.props;
-        if (onOpen) onOpen();
-        break;
-      }
-      case 'exit': {
-        const { onClose } = this.props;
-        if (onClose) onClose();
-        break;
-      }
-    }
-  };
-
-  handleClickOutside = () => {
-    this.setState({ menuOpen: null });
-  };
-
-  handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key.toLowerCase()) {
-        case 'n':
-          e.preventDefault();
-          this.handleNew();
-          break;
-        case 'o':
-          e.preventDefault();
-          this.handleOpen();
-          break;
-        case 's':
-          e.preventDefault();
-          this.handleSave();
-          break;
-        case 'a':
-          break;
-      }
-    }
-  };
-
-  renderMenuBar() {
-    const { menuOpen, wordWrap, showStatusBar, zoom } = this.state;
-
-    const menus: Menu[] = [
-      {
-        name: '文件(F)',
-        items: [
-          { label: '新建(N)', action: 'new', shortcut: 'Ctrl+N' },
-          { label: '打开(O)...', action: 'open', shortcut: 'Ctrl+O' },
-          { label: '保存(S)', action: 'save', shortcut: 'Ctrl+S' },
-          { label: '另存为(A)...', action: 'saveAs' },
-          { type: 'divider' },
-          { label: '退出(X)', action: 'exit' },
-        ],
-      },
-      {
-        name: '编辑(E)',
-        items: [
-          { label: '撤销(U)', action: 'undo', shortcut: 'Ctrl+Z' },
-          { type: 'divider' },
-          { label: '剪切(T)', action: 'cut', shortcut: 'Ctrl+X' },
-          { label: '复制(C)', action: 'copy', shortcut: 'Ctrl+C' },
-          { label: '粘贴(P)', action: 'paste', shortcut: 'Ctrl+V' },
-          { label: '删除(D)', action: 'delete', shortcut: 'Del' },
-          { type: 'divider' },
-          { label: '全选(A)', action: 'selectAll', shortcut: 'Ctrl+A' },
-        ],
-      },
-      {
-        name: '格式(O)',
-        items: [
-          { label: `${wordWrap ? '✓ ' : ''}自动换行(W)`, action: 'wordWrap' },
-          { label: '字体(F)...', action: 'font' },
-        ],
-      },
-      {
-        name: '查看(V)',
-        items: [
-          { label: `${showStatusBar ? '✓ ' : ''}状态栏(S)`, action: 'statusBar' },
-          { type: 'divider' },
-          { label: '放大(I)', action: 'zoomIn', shortcut: 'Ctrl++' },
-          { label: '缩小(O)', action: 'zoomOut', shortcut: 'Ctrl+-' },
-          { label: `缩放: ${zoom}%`, action: 'zoomDisplay', disabled: true },
-        ],
-      },
-      {
-        name: '帮助(H)',
-        items: [
-          { label: '查看帮助(H)', action: 'help' },
-          { type: 'divider' },
-          { label: '关于记事本(A)', action: 'about' },
-        ],
-      },
-    ];
-
-    return (
-      <MenuBar onClick={this.handleClickOutside}>
-        {menus.map(menu => (
-          <div key={menu.name} style={{ position: 'relative' }}>
-            <MenuButton
-              data-open={menuOpen === menu.name}
-              onClick={(e) => {
-                e.stopPropagation();
-                this.handleMenuClick(menu.name);
-              }}
-            >
-              {menu.name}
-            </MenuButton>
-            {menuOpen === menu.name && (
-              <DropdownMenu
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  zIndex: 1000,
-                }}
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                }}
-              >
-                {menu.items.map((item, index) => {
-                  if (item.type === 'divider') {
-                    return <Separator key={index} />;
-                  }
-                  return (
-                    <MenuItemStyled
-                      key={index}
-                      className={item.disabled ? 'disabled' : ''}
-                      onClick={() => !item.disabled && item.action && this.handleMenuItemClick(item.action)}
-                    >
-                      <span>{item.label}</span>
-                      {item.shortcut && <Shortcut>{item.shortcut}</Shortcut>}
-                    </MenuItemStyled>
-                  );
-                })}
-              </DropdownMenu>
-            )}
-          </div>
-        ))}
+  return (
+    <EditorContainer onClick={(e) => e.stopPropagation()}>
+      {/* 菜单栏 */}
+      <MenuBar>
+        <div onClick={(e) => { e.stopPropagation(); handleMenuClick('file'); }}>
+          文件
+          <DropdownMenu show={activeMenu === 'file'}>
+            <List>
+              <List.Item onClick={() => handleMenuAction('new')}>新建</List.Item>
+              <List.Item onClick={() => handleMenuAction('save')}>保存</List.Item>
+              <List.Divider />
+              <List.Item onClick={() => handleMenuAction('copy')}>复制</List.Item>
+              <List.Item onClick={() => handleMenuAction('paste')}>粘贴</List.Item>
+            </List>
+          </DropdownMenu>
+        </div>
+        <div onClick={(e) => { e.stopPropagation(); handleMenuClick('edit'); }}>
+          编辑
+          <DropdownMenu show={activeMenu === 'edit'}>
+            <List>
+              <List.Item onClick={() => handleMenuAction('copy')}>复制</List.Item>
+              <List.Item onClick={() => handleMenuAction('paste')}>粘贴</List.Item>
+            </List>
+          </DropdownMenu>
+        </div>
+        <div onClick={(e) => { e.stopPropagation(); handleMenuClick('view'); }}>
+          查看
+          <DropdownMenu show={activeMenu === 'view'}>
+            <List>
+              <List.Item onClick={() => handleMenuAction('preview')}>
+                {previewMode ? '编辑模式' : '预览模式'}
+              </List.Item>
+            </List>
+          </DropdownMenu>
+        </div>
       </MenuBar>
-    );
-  }
 
-  render() {
-    const { fileName, showStatusBar: propsShowStatusBar } = this.props;
-    const { 
-      showStatusBar, 
-      zoom, 
-      showAbout, 
-      showSaveConfirm,
-      editedContent, 
-      isModified,
-      wordWrap,
-      cursorLine,
-      cursorColumn,
-    } = this.state;
-    
-    const displayStatusBar = propsShowStatusBar !== false && showStatusBar;
-    const title = fileName ? (isModified ? `*${fileName}` : fileName) : (isModified ? '*无标题' : '无标题');
-    void title; // suppress unused warning
-
-    return (
-      <Container onClick={this.handleClickOutside} onKeyDown={this.handleKeyDown}>
-        {this.renderMenuBar()}
-
-        <EditorArea>
-          <EditorTextarea
-            ref={this.textareaRef}
-            wordWrap={wordWrap}
-            style={{ fontSize: `${14 * zoom / 100}px` }}
-            value={editedContent}
-            onChange={(e) => this.handleContentChange(e.target.value)}
-            onClick={this.handleCursorChange}
-            onKeyUp={this.handleCursorChange}
-            spellCheck={false}
+      {/* 工具栏 */}
+      <Toolbar>
+        <StyledButton onClick={handleSave} disabled={isSaving || !isModified}>
+          {isSaving ? '保存中...' : isModified ? '* 保存' : '保存'}
+        </StyledButton>
+        <StyledButton onClick={togglePreview}>
+          {previewMode ? '编辑' : '预览'}
+        </StyledButton>
+        {filePath && (
+          <span style={{ fontSize: '11px', color: '#666', marginLeft: '8px' }}>
+            {filePath} {isModified && <span style={{ color: 'red' }}>*</span>}
+          </span>
+        )}
+      </Toolbar>
+      <EditorContent>
+        {!previewMode ? (
+          <StyledTextArea
+            value={content || ''}
+            onChange={handleContentChange}
+            placeholder="在这里输入文本..."
           />
-        </EditorArea>
-
-        {displayStatusBar && (
-          <StatusBar>
-            <span>第 {cursorLine} 行，第 {cursorColumn} 列</span>
-            <span>{zoom}% | Windows (CRLF) | UTF-8</span>
-          </StatusBar>
+        ) : (
+          <PreviewPane shadow>
+            <MarkdownRenderer content={content || ''} />
+          </PreviewPane>
         )}
-
-        {showAbout && (
-          <AboutOverlay onClick={() => this.setState({ showAbout: false })}>
-            <AboutDialog variant="well" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-              <AboutTitle>记事本</AboutTitle>
-              <AboutText>版本 1.0</AboutText>
-              <AboutText>Windows 95 风格记事本</AboutText>
-              <AboutText>使用 React95 构建</AboutText>
-              <AboutText>支持编辑、新建、保存功能</AboutText>
-              <AboutText>© 2024 TeaTime Code</AboutText>
-              <DialogButton onClick={() => this.setState({ showAbout: false })}>
-                确定
-              </DialogButton>
-            </AboutDialog>
-          </AboutOverlay>
-        )}
-
-        {showSaveConfirm && (
-          <AboutOverlay>
-            <ConfirmDialog variant="well" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-              <ConfirmText>
-                是否保存对 {fileName || '无标题'} 的更改？
-              </ConfirmText>
-              <ButtonRow>
-                <DialogButton onClick={this.handleConfirmSave}>
-                  保存(S)
-                </DialogButton>
-                <DialogButton onClick={this.handleConfirmDontSave}>
-                  不保存(N)
-                </DialogButton>
-                <DialogButton onClick={this.handleConfirmCancel}>
-                  取消
-                </DialogButton>
-              </ButtonRow>
-            </ConfirmDialog>
-          </AboutOverlay>
-        )}
-      </Container>
-    );
-  }
-}
+      </EditorContent>
+      {/* 状态栏 */}
+      <StatusBar>
+        <span>{lineCount} 行，{charCount} 字符</span>
+        <span>{cursorPosition}</span>
+        <span>{filePath ? 'UTF-8' : '未命名'}</span>
+      </StatusBar>
+    </EditorContainer>
+  );
+};
 
 export default TextEditor;

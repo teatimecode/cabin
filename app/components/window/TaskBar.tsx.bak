@@ -1,0 +1,200 @@
+import React from 'react';
+import styled from 'styled-components';
+import { Frame, Button, Divider } from '@react95/core';
+import { getIcon } from '../icons';
+
+const StartButton = styled(Button)`
+  margin: 0 4px;
+  font-weight: bold;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+`;
+
+const WindowButtonsContainer = styled.div`
+  display: flex;
+  flex: 1;
+  margin: 0 4px;
+  gap: 2px;
+`;
+
+const WindowButton = styled(Button)<{ active?: boolean }>`
+  flex: 0 0 auto;
+  min-width: 120px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: ${props => props.active ? '#0a246a' : '#c0c0c0'};
+  color: ${props => props.active ? '#fff' : '#000'};
+  border: ${props => props.active ? '2px outset #0a246a' : '2px outset #c0c0c0'};
+  border-radius: 0;
+  font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const DividerLine = styled(Divider)`
+  height: 24px;
+  margin: 0 4px;
+`;
+
+const StartMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 200px;
+  background: #fff;
+  border: 2px solid #0a246a;
+  display: none;
+  flex-direction: column;
+  z-index: 1000;
+
+  ${StartButton}:hover + & {
+    display: flex;
+  }
+`;
+
+const MenuButton = styled(Button)`
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: #0a246a;
+    color: #fff;
+  }
+`;
+
+const Clock = styled.div`
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
+  background: #c0c0c0;
+  border: 1px inset #c0c0c0;
+  display: flex;
+  align-items: center;
+  margin: 0 4px;
+`;
+
+interface TaskBarProps {
+  windowManager: any;
+}
+
+interface TaskBarState {
+  windows: any[];
+  activeWindowId: string | null;
+}
+
+class TaskBar extends React.Component<TaskBarProps, TaskBarState> {
+  constructor(props: TaskBarProps) {
+    super(props);
+    this.state = {
+      windows: [],
+      activeWindowId: null,
+    };
+  }
+
+  componentDidMount() {
+    const { windowManager } = this.props;
+    
+    // 订阅窗口管理器的更改
+    if (windowManager && windowManager.addListener) {
+      windowManager.addListener('change', this.handleWindowsChange);
+    }
+    
+    // 初始化窗口列表
+    this.handleWindowsChange();
+  }
+
+  componentWillUnmount() {
+    const { windowManager } = this.props;
+    
+    // 取消订阅
+    if (windowManager && windowManager.removeListener) {
+      windowManager.removeListener('change', this.handleWindowsChange);
+    }
+  }
+
+  handleWindowsChange = () => {
+    // 此处暂时保持空实现，因为 windowManager 在当前实现中没有传递
+    // 实际实现会依赖于 windowManager 的具体实现
+  };
+
+  handleWindowClick = (window: any) => {
+    // 此处暂时保持空实现
+  };
+
+  render() {
+    const { windows } = this.state;
+
+    return (
+      <AppBar fixed position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
+        <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+            <StartButton square>
+              {getIcon('my-computer', { size: 'small' })}
+              <span style={{ marginLeft: '4px' }}>开始</span>
+              <StartMenu>
+                <MenuButton>
+                  {getIcon('folder', { size: 'small' })}
+                  文档
+                </MenuButton>
+                <MenuButton>
+                  {getIcon('my-computer', { size: 'small' })}
+                  设置
+                </MenuButton>
+                <MenuButton>
+                  {getIcon('document', { size: 'small' })}
+                  查找
+                </MenuButton>
+                <MenuButton>
+                  {getIcon('drive', { size: 'small' })}
+                  帮助 <a href="https://react95.github.io/React95/" target="_blank" rel="noopener noreferrer">官方组件文档</a>
+                </MenuButton>
+                <MenuButton>
+                  {getIcon('close', { size: 'small' })}
+                  关机...
+                </MenuButton>
+              </StartMenu>
+            </StartButton>
+            <WindowButtonsContainer>
+              {windows.map((window) => (
+                <WindowButton
+                  key={window.id}
+                  active={this.state.activeWindowId === window.id && !window.isMinimized ? true : undefined}
+                  onClick={() => this.handleWindowClick(window)}
+                >
+                  {getIcon(window.icon || 'folder', { size: 'small' })}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {window.title}
+                  </span>
+                </WindowButton>
+              ))}
+            </WindowButtonsContainer>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <DividerLine vertical />
+            <Clock shadow>
+              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Clock>
+          </div>
+        </Toolbar>
+      </AppBar>
+    );
+  }
+}
+
+export default TaskBar;

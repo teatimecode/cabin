@@ -10,10 +10,7 @@ import RemovableDiskManager, { isFileSystemAccessSupported } from './RemovableDi
 import type { MountOptions } from './RemovableDiskManager';
 
 // 创建全局文件系统实例
-const globalFileSystem = new FileSystem();
-
-// 初始化静态文件系统
-globalFileSystem.buildFromJson(StaticFileSystem);
+const globalFileSystem = new FileSystem(StaticFileSystem);
 
 // 创建可移动磁盘管理器
 const removableDiskManager = new RemovableDiskManager(globalFileSystem);
@@ -66,17 +63,15 @@ const FSService = {
     return this.removable.getMountedDrives();
   },
 
-  searchFiles(query: string, startPath = '/'): FSNode[] {
-    return this.fs.findNode(query, startPath);
-  },
-
   addChangeListener(callback: (event: any) => void): () => void {
     return this.removable.addChangeListener(callback);
   },
 
-  toJson() {
-    return this.fs.toJson();
+  searchFiles(query: string, startPath = '/'): FSNode[] {
+    return this.fs.findNode ? this.fs.findNode(query, startPath) : [];
   },
+
+  // toJson 方法已移除，因为 FileSystem 类没有此方法
 };
 
 export { FileSystem, NodeType };

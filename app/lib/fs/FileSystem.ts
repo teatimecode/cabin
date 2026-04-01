@@ -66,7 +66,8 @@ export class FSNode {
   isFolder(): boolean {
     return this.type === NodeType.FOLDER ||
       this.type === NodeType.DRIVE ||
-      this.type === NodeType.ROOT;
+      this.type === NodeType.ROOT ||
+      this.type === NodeType.PLACEHOLDER;
   }
 
   isFile(): boolean {
@@ -201,173 +202,238 @@ export interface NodeData {
   [key: string]: any;
 }
 
-/**
- * 文件系统管理器
- */
+export interface FileSystemNode {
+  type: 'file' | 'folder' | 'drive';
+  name: string;
+  content?: string;
+  children?: FSNode[];
+  parentId?: string;
+  size?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  icon?: string;
+  app?: string;
+  postId?: string; // 用于博客文章ID
+}
+
 export class FileSystem {
-  root: FolderNode;
-  nodeMap: Map<string, FSNode>;
-  mountedDrives: Map<string, DriveNode>;
+  private nodes: Map<string, FSNode> = new Map();
+  private rootNode: FolderNode;
 
-  constructor() {
-    this.root = new FolderNode({ id: '/', name: '桌面', path: '/' });
-    this.nodeMap = new Map([['/', this.root]]);
-    this.mountedDrives = new Map();
-  }
-
-  buildFromJson(jsonStructure: Record<string, NodeData>): this {
-    Object.entries(jsonStructure).forEach(([path, nodeData]) => {
-      this.addNode(path, nodeData);
+  constructor(initialStructure?: any) {
+    // 初始化根节点
+    this.rootNode = new FolderNode({
+      id: '/',
+      name: 'Root',
+      path: '/',
+      icon: 'folder',
+      children: [],
     });
-    return this;
+    this.nodes.set('/', this.rootNode);
+
+    if (initialStructure) {
+      this.buildFromStructure(initialStructure, '/');
+    }
   }
 
-  addNode(path: string, nodeData: NodeData): FSNode | null {
-    const parentPath = this.getParentPath(path);
-    const parentNode = this.nodeMap.get(parentPath) as FolderNode | undefined;
+  private getFileExtension(filename: string): string {
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  }
 
-    if (!parentNode && parentPath !== '/') {
-      console.warn(`Parent path not found: ${parentPath}`);
-      return null;
+  private getAppForExtension(extension: string): string {
+    // 根据文件扩展名返回相应的应用程序
+    switch (extension) {
+      case 'txt':
+        return 'notepad';
+      case 'md':
+        return 'markdown-editor';
+      case 'json':
+        return 'json-viewer';
+      default:
+        return 'default-app';
     }
+  }
 
-    // 排除children属性，因为它可能是string[]类型，而构造函数期望FSNode[]
-    const { children, ...restData } = nodeData;
-
-    let node: FSNode;
-    if (nodeData.type === NodeType.FILE) {
-      node = new FileNode({ ...restData, id: path, path, parent: parentNode });
-    } else if (nodeData.type === NodeType.DRIVE) {
-      node = new DriveNode({ ...restData, id: path, path, parent: parentNode });
+  private buildNodeFromData(data: any, path: string): FSNode {
+    if (data.type === 'folder' || data.type === 'root' || data.type === 'placeholder') {
+      return new FolderNode({
+        id: path,
+        name: data.name || path,
+        path,
+        icon: data.icon || 'folder',
+        type: data.type, // 保留原始类型（folder、root 或 placeholder）
+        children: [],
+      });
+    } else if (data.type === 'file') {
+      return new FileNode({
+        id: path,
+        name: data.name || path,
+        path,
+        icon: data.icon || 'file',
+        content: data.content,
+        size: data.size || 0,
+        extension: this.getFileExtension(data.name || path),
+        app: this.getAppForExtension(this.getFileExtension(data.name || path)),
+        encoding: data.encoding || 'utf-8',
+      });
+    } else if (data.type === 'drive') {
+      return new DriveNode({
+        id: path,
+        name: data.name || path,
+        path,
+        icon: data.icon || 'drive-removable',
+        children: [],
+        driveType: data.driveType || DriveType.VIRTUAL,
+        totalSpace: data.totalSpace || 0,
+        freeSpace: data.freeSpace || 0,
+        mountPoint: data.mountPoint || path,
+      });
     } else {
-      node = new FolderNode({ ...restData, id: path, path, parent: parentNode });
+      throw new Error(`Unknown node type: ${data.type}`);
     }
-
-    this.nodeMap.set(path, node);
-    if (parentNode) {
-      (parentNode as FolderNode).addChild(node);
-    }
-
-    return node;
   }
 
-  getParentPath(path: string): string {
-    const parts = path.split('/').filter(Boolean);
-    parts.pop();
-    return '/' + parts.join('/');
-  }
-
-  getNode(path: string): FSNode | undefined {
-    return this.nodeMap.get(path);
-  }
-
-  listDirectory(path: string): FSNode[] {
-    const node = this.nodeMap.get(path);
-    if (!node || !node.isFolder()) return [];
-    return (node as FolderNode).children || [];
-  }
-
-  findNode(query: string, startPath = '/'): FSNode[] {
-    const results: FSNode[] = [];
-    const startNode = this.nodeMap.get(startPath) as FolderNode | undefined;
-    if (!startNode) return results;
-
-    const search = (node: FSNode) => {
-      if (node.name.toLowerCase().includes(query.toLowerCase())) {
-        results.push(node);
-      }
-      if ((node as FolderNode).children) {
-        (node as FolderNode).children.forEach(search);
-      }
-    };
-
-    search(startNode);
-    return results;
-  }
-
-  async mountDrive(mountPath: string, driveNode: DriveNode): Promise<DriveNode> {
-    const existingNode = this.nodeMap.get(mountPath);
-    if (existingNode && existingNode.isMountable()) {
-      const parent = existingNode.parent as FolderNode | null;
-      if (parent) {
-        parent.removeChild(existingNode.id);
-        driveNode.id = mountPath;
-        driveNode.path = mountPath;
-        driveNode.parent = parent;
-        parent.addChild(driveNode);
-      }
-    } else {
-      const parentPath = this.getParentPath(mountPath);
-      const parentNode = this.nodeMap.get(parentPath) as FolderNode | undefined;
-      if (parentNode) {
-        driveNode.id = mountPath;
-        driveNode.path = mountPath;
-        driveNode.parent = parentNode;
-        parentNode.addChild(driveNode);
+private buildFromStructure(structure: any, parentPath: string): void {
+  Object.entries(structure).forEach(([path, nodeData]) => {
+    const fullPath = path === '/' ? '/' : `${parentPath}${parentPath === '/' ? '' : '/'}${path}`;
+    
+    if (typeof nodeData === 'object' && nodeData !== null) {
+      const data = nodeData as NodeData;
+      const node = this.buildNodeFromData(data, fullPath);
+      this.nodes.set(fullPath, node);
+      
+      if (data.children && typeof data.children === 'object') {
+        Object.entries(data.children).forEach(([childPath, childData]) => {
+          this.buildFromStructure({ [childPath]: childData }, fullPath);
+        });
       }
     }
+  });
+}
 
-    this.nodeMap.set(mountPath, driveNode);
-    this.mountedDrives.set(mountPath, driveNode);
-    if (driveNode.children) {
-      this.addNodeToMap(driveNode);
-    }
-    return driveNode;
+getNode(path: string): FSNode | null {
+  return this.nodes.get(path) || null;
+}
+
+listDirectory(path: string): FSNode[] {
+  const node = this.getNode(path);
+  if (!node || !node.isFolder()) {
+    return [];
   }
 
-  addNodeToMap(node: FSNode): void {
-    this.nodeMap.set(node.path, node);
-    if ((node as FolderNode).children) {
-      (node as FolderNode).children.forEach(child => this.addNodeToMap(child));
+  const folderNode = node as FolderNode;
+  return folderNode.children || [];
+}
+
+  async readFile(path: string): Promise<string> {
+    const node = this.getNode(path);
+    if (!node || !node.isFile()) {
+      throw new Error(`File not found: ${path}`);
+    }
+    const fileNode = node as FileNode;
+    return fileNode.content || '';
+  }
+
+async writeFile(path: string, content: string): Promise<void> {
+  const pathParts = path.split('/').filter(Boolean);
+  const fileName = pathParts[pathParts.length - 1] || '';
+  const parentPath = '/' + pathParts.slice(0, -1).join('/');
+
+  // 创建父级目录（如果不存在）
+  if (parentPath !== '/' && !this.getNode(parentPath)) {
+    await this.createDirectory(parentPath);
+  }
+
+  const fileNode = new FileNode({
+    id: path,
+    name: fileName,
+    path,
+    content,
+    size: new Blob([content]).size,
+    app: this.getAppForExtension(this.getFileExtension(fileName)),
+    encoding: 'utf-8',
+    updatedAt: new Date(),
+  });
+
+  this.nodes.set(path, fileNode);
+
+  // 更新父目录的子节点列表
+  if (parentPath && parentPath !== path) {
+    const parentNode = this.getNode(parentPath);
+    if (parentNode && parentNode.type === 'folder') {
+      (parentNode as FolderNode).addChild(fileNode);
+      this.nodes.set(parentPath, parentNode);
+    }
+  }
+  }
+
+  async createDirectory(path: string): Promise<void> {
+    const pathParts = path.split('/').filter(Boolean);
+    const dirName = pathParts[pathParts.length - 1] || '';
+    const parentPath = '/' + pathParts.slice(0, -1).join('/');
+
+    // 检查目录是否已存在
+    if (this.getNode(path)) {
+      return;
+    }
+
+    // 创建父级目录（如果不存在）
+    if (parentPath !== '/' && !this.getNode(parentPath)) {
+      await this.createDirectory(parentPath);
+    }
+
+    const dirNode = new FolderNode({
+      id: path,
+      name: dirName,
+      path,
+      icon: 'folder',
+      children: [],
+    });
+
+    this.nodes.set(path, dirNode);
+
+    // 更新父目录的子节点列表
+    if (parentPath && parentPath !== path) {
+      const parentNode = this.getNode(parentPath);
+      if (parentNode && parentNode.type === 'folder') {
+        (parentNode as FolderNode).addChild(dirNode);
+        this.nodes.set(parentPath, parentNode);
+      }
     }
   }
 
-  async unmountDrive(mountPath: string): Promise<boolean> {
-    const driveNode = this.mountedDrives.get(mountPath);
-    if (!driveNode) return false;
+async mountDirectory(mountPath: string, dirHandle: any): Promise<void> {
+  // 在实际实现中，这里会连接到真实的文件系统
+  // 当前模拟实现仅添加一个占位符节点
+  const placeholderNode = new FolderNode({
+    id: mountPath,
+    name: '可移动磁盘',
+    path: mountPath,
+    icon: 'drive-removable',
+    children: [],
+  });
 
-    const parent = driveNode.parent as FolderNode | null;
-    if (parent) {
-      parent.removeChild(driveNode.id);
-    }
-    this.removeNodeFromMap(driveNode);
-    this.mountedDrives.delete(mountPath);
-    return true;
-  }
+  this.nodes.set(mountPath, placeholderNode);
+}
 
-  removeNodeFromMap(node: FSNode): void {
-    this.nodeMap.delete(node.path);
-    if ((node as FolderNode).children) {
-      (node as FolderNode).children.forEach(child => this.removeNodeFromMap(child));
-    }
+  // 可移动磁盘管理器需要的方法
+async mountDrive(mountPath: string, driveNode: DriveNode) {
+  this.nodes.set(mountPath, driveNode);
+}
+
+  unmountDrive(mountPath: string): boolean {
+    return this.nodes.delete(mountPath);
   }
 
   getMountedDrives(): DriveNode[] {
-    return Array.from(this.mountedDrives.values());
-  }
-
-  toJson(): Record<string, NodeData> {
-    const result: Record<string, NodeData> = {};
-    this.nodeMap.forEach((node, path) => {
-      result[path] = {
-        type: node.type,
-        name: node.name,
-        icon: node.icon,
-        children: (node as FolderNode).children
-          ? (node as FolderNode).children.map(c => {
-              const id = c.id || c.path || '';
-              return id.split('/').pop()!;
-            }).filter(Boolean)
-          : undefined,
-        app: (node as FileNode).app,
-        content: (node as FileNode).content ?? undefined,
-        postId: (node as any).postId,
-        driveType: (node as DriveNode).driveType,
-        totalSpace: (node as DriveNode).totalSpace,
-        freeSpace: (node as DriveNode).freeSpace,
-      };
+    const drives: DriveNode[] = [];
+    this.nodes.forEach((node, path) => {
+      if (path.startsWith('/removable/') && node.type === 'drive') {
+        drives.push(node as any);
+      }
     });
-    return result;
+    return drives;
   }
 }
 

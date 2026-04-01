@@ -3,8 +3,8 @@
  * 使用 File System Access API 实现浏览器端文件系统访问
  */
 
-import { DriveNode, FolderNode, FileNode, DriveType } from './FileSystem';
-import type { FileSystem } from './FileSystem';
+import { DriveNode, FolderNode, FileNode, DriveType, FileSystem } from './FileSystem';
+import mitt from 'mitt';
 
 /**
  * 检查浏览器是否支持 File System Access API
@@ -33,15 +33,16 @@ export type ChangeListener = (event: ChangeEvent) => void;
  * 可移动磁盘管理器
  */
 export class RemovableDiskManager {
-  fileSystem: FileSystem;
-  directoryHandles: Map<string, any>;
-  watchers: Set<ChangeListener>;
+  private mountedDrives: Map<string, any> = new Map();
+  private observers: Array<(drives: Array<any>) => void> = [];
+  private watchers: Set<ChangeListener> = new Set();
+  private directoryHandles: Map<string, any> = new Map();
+  private fileSystem: FileSystem;
 
-  constructor(fileSystem: FileSystem) {
-    this.fileSystem = fileSystem;
-    this.directoryHandles = new Map();
-    this.watchers = new Set();
-  }
+constructor(fileSystem: FileSystem) {
+  this.fileSystem = fileSystem;
+  this.emitter = mitt();
+}
 
   isSupported(): boolean {
     return isFileSystemAccessSupported();
@@ -242,18 +243,53 @@ export class RemovableDiskManager {
     return this.directoryHandles.has(mountPath);
   }
 
-  async refreshDirectory(path: string): Promise<FolderNode | null> {
-    const handle = this.directoryHandles.get(path);
-    if (!handle) return null;
+async refreshDirectory(path: string): Promise<FolderNode | null> {
+  const handle = this.directoryHandles.get(path);
+  if (!handle) return null;
 
-    const node = this.fileSystem.getNode(path);
-    if (!node || !node.isFolder()) return null;
+  const node = this.fileSystem.getNode(path);
+  if (!node || node.type !== 'folder') return null;
 
-    (node as FolderNode).children = [];
-    await this.readDirectory(handle, node as FolderNode, path);
-    this.notifyChange('refresh', { path, node });
+  const folderNode = node as FolderNode;
+  folderNode.children = [];
+  await this.readDirectory(handle, folderNode, path);
+  this.notifyChange('refresh', { path, node: folderNode });
 
-    return node as FolderNode;
+  return folderNode;
+}
+
+async mountDrive(path: string, options?: any) {
+  // 模拟挂载过程
+  const driveNode = new DriveNode({
+    id: `drive_${Date.now()}`,
+    name: `可移动磁盘 (${path})`,
+    path,
+    icon: 'drive-removable',
+    driveType: DriveType.REMOVABLE,
+    totalSpace: options?.capacity || 0,
+    freeSpace: options?.freeSpace || 0,
+    mountPoint: path,
+  });
+
+  this.fileSystem.mountDrive(path, driveNode);
+  this.notifyChange('mount', { path, node: driveNode });
+
+  return driveNode;
+}
+
+  subscribe(callback: (drives: Array<any>) => void) {
+    this.observers.push(callback);
+    return () => {
+      const index = this.observers.indexOf(callback);
+      if (index > -1) {
+        this.observers.splice(index, 1);
+      }
+    };
+  }
+
+  private notifyObservers() {
+    const drives = this.getMountedDrives();
+    this.observers.forEach(observer => observer(drives));
   }
 }
 

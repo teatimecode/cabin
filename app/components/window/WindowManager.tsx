@@ -1,398 +1,330 @@
+"use client";
+
 import React from 'react';
-import styled from 'styled-components';
+import { AppConfig } from '../../config/apps';
+import { useFileSystem } from '../../lib/fs/FSContext';
 import Window from './Window';
-import type { WindowState } from './Window';
-import { AppType } from '../../config/apps';
+
+// 导入应用组件
 import FileExplorer from '../app/FileExplorer';
 import TextEditor from '../app/TextEditor';
-import { FSProvider, useFileSystem } from '../../lib/fs/FSContext';
-import { getFileContentById } from '../../lib/fs';
 
-const Container = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-`;
-
-interface WindowManagerInnerProps {
-  onRef?: (inst: WindowManagerInnerInstance | null) => void;
-  fileSystem?: any;
-  getFileContent?: (path: string) => Promise<string>;
+// 窗口接口定义
+export interface WindowInstance {
+  id: string;
+  appId: string;
+  title: string;
+  icon?: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  isMinimized: boolean;
+  isMaximized: boolean;
+  zIndex: number;
+  appType?: string;
+  postId?: string; // 用于博客文章ID
 }
 
-interface WindowManagerInnerState {
-  windows: WindowState[];
-  activeWindowId: string | null;
+interface WindowManagerState {
+  windows: WindowInstance[];
   nextZIndex: number;
 }
 
-interface WindowManagerInnerInstance {
-  openWindow: (app: any) => void;
-  closeWindow: (windowId: string) => void;
-  focusWindow: (windowId: string | null) => void;
-  restoreWindow: (windowId: string) => void;
-  getWindows: () => WindowState[];
-  getActiveWindowId: () => string | null;
+interface WindowManagerProps {
+  fileSystem?: any;
+  getFileContent?: (_path: string) => Promise<string>;
 }
 
-/**
- * 窗口管理器内部组件（使用Context）
- */
-class WindowManagerInner extends React.PureComponent<WindowManagerInnerProps, WindowManagerInnerState> {
-  state: WindowManagerInnerState = {
-    windows: [],
-    activeWindowId: null,
-    nextZIndex: 1,
+class WindowManager extends React.Component<WindowManagerProps, WindowManagerState> {
+  private windowPositions: Map<string, { x: number; y: number }> = new Map();
+  private nextWindowPosition = { x: 50, y: 50 }; // 初始位置偏移
+
+  constructor(props: WindowManagerProps) {
+    super(props);
+    this.state = {
+      windows: [],
+      nextZIndex: 1,
+    };
+  }
+
+  // 获取下一个窗口位置，避免完全重叠
+  getNextWindowPosition = () => {
+    const pos = { ...this.nextWindowPosition };
+    // 偏移下一个窗口的位置
+    this.nextWindowPosition.x = Math.min(this.nextWindowPosition.x + 30, 200);
+    this.nextWindowPosition.y = Math.min(this.nextWindowPosition.y + 30, 200);
+
+    // 如果超出范围则重置
+    if (this.nextWindowPosition.x > 150 || this.nextWindowPosition.y > 150) {
+      this.nextWindowPosition = { x: 50, y: 50 };
+    }
+
+    return pos;
   };
 
-  openWindow = (app: any) => {
-    const { windows, nextZIndex } = this.state;
-
-    if (app.type !== AppType.FOLDER && app.type !== AppType.EXPLORER) {
-      const existingWindow = windows.find(w => w.appId === app.id);
+  // 打开应用
+  openApp = (app: AppConfig, postId?: string) => {
+    // 检查是否已有相同应用的窗口（非唯一窗口）
+    if (!app.unique) {
+      const existingWindow = this.state.windows.find(w => w.appId === app.id && !w.isMinimized);
       if (existingWindow) {
         this.focusWindow(existingWindow.id);
         return;
       }
     }
 
-    const newWindow: WindowState = {
-      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    // 如果应用是唯一的，检查是否已存在
+    if (app.unique) {
+      const existingWindow = this.state.windows.find(w => w.appId === app.id);
+      if (existingWindow) {
+        this.focusWindow(existingWindow.id);
+        return;
+      }
+    }
+
+    const newPosition = this.getNextWindowPosition();
+    const newWindow: WindowInstance = {
+      id: `${app.id}-${Date.now()}`, // 使用时间戳确保唯一性
       appId: app.id,
       title: app.name,
-      app: app,
-      path: app.path || '/',
-      icon: app.iconName || 'folder',
-      zIndex: nextZIndex,
+      icon: app.iconName,
+      position: newPosition,
+      size: { width: 600, height: 400 },
       isMinimized: false,
       isMaximized: false,
+      zIndex: this.state.nextZIndex,
+      appType: app.type,
+      postId: postId, // 传递postId用于博客文章
     };
 
-    this.setState({
-      windows: [...windows, newWindow],
-      activeWindowId: newWindow.id,
-      nextZIndex: nextZIndex + 1,
-    });
-  };
-
-  closeWindow = (windowId: string) => {
-    const { windows, activeWindowId } = this.state;
-    const newWindows = windows.filter(w => w.id !== windowId);
-
-    let newActiveId = activeWindowId;
-    if (activeWindowId === windowId) {
-      newActiveId = newWindows.length > 0 ? newWindows[newWindows.length - 1].id : null;
-    }
-
-    this.setState({
-      windows: newWindows,
-      activeWindowId: newActiveId,
-    });
-  };
-
-  focusWindow = (windowId: string | null) => {
-    if (!windowId) return;
-
-    const { windows, nextZIndex } = this.state;
-    const newWindows = windows.map(w => ({
-      ...w,
-      zIndex: w.id === windowId ? nextZIndex : w.zIndex,
+    this.setState(prevState => ({
+      windows: [...prevState.windows, newWindow],
+      nextZIndex: prevState.nextZIndex + 1,
     }));
-
-    this.setState({
-      windows: newWindows,
-      activeWindowId: windowId,
-      nextZIndex: nextZIndex + 1,
-    });
   };
 
-  minimizeWindow = (windowId: string) => {
-    const { windows } = this.state;
-    const newWindows = windows.map(w =>
-      w.id === windowId ? { ...w, isMinimized: true } : w
-    );
-
-    const visibleWindows = newWindows.filter(w => !w.isMinimized);
-    const newActiveId = visibleWindows.length > 0 ? visibleWindows[visibleWindows.length - 1].id : null;
-
-    this.setState({
-      windows: newWindows,
-      activeWindowId: newActiveId,
-    });
+  // 关闭窗口
+  closeWindow = (id: string) => {
+    this.setState(prevState => ({
+      windows: prevState.windows.filter(window => window.id !== id),
+      nextZIndex: prevState.nextZIndex > 1 ? prevState.nextZIndex - 1 : 1,
+    }));
   };
 
-  maximizeWindow = (windowId: string) => {
-    const { windows } = this.state;
-    const newWindows = windows.map(w =>
-      w.id === windowId ? { ...w, isMaximized: !w.isMaximized } : w
-    );
-
-    this.setState({ windows: newWindows });
+  // 最小化窗口
+  minimizeWindow = (id: string) => {
+    this.setState(prevState => ({
+      windows: prevState.windows.map(window =>
+        window.id === id ? { ...window, isMinimized: true } : window
+      ),
+    }));
   };
 
-  restoreWindow = (windowId: string) => {
-    const { windows, nextZIndex } = this.state;
-    const newWindows = windows.map(w =>
-      w.id === windowId ? { ...w, isMinimized: false, zIndex: nextZIndex } : w
-    );
-
-    this.setState({
-      windows: newWindows,
-      activeWindowId: windowId,
-      nextZIndex: nextZIndex + 1,
-    });
+  // 最大化窗口
+  maximizeWindow = (id: string) => {
+    this.setState(prevState => ({
+      windows: prevState.windows.map(window =>
+        window.id === id ? { ...window, isMaximized: !window.isMaximized } : window
+      ),
+    }));
   };
 
-  getWindows = (): WindowState[] => {
-    return this.state.windows;
+  // 聚焦窗口
+  focusWindow = (id: string) => {
+    const focusedZIndex = this.state.nextZIndex;
+    this.setState(prevState => ({
+      windows: prevState.windows.map(window => {
+        if (window.id === id) {
+          return { ...window, zIndex: focusedZIndex, isMinimized: false };
+        } else if (window.zIndex >= focusedZIndex) {
+          return { ...window, zIndex: window.zIndex - 1 };
+        }
+        return window;
+      }),
+      nextZIndex: prevState.nextZIndex + 1,
+    }));
   };
 
+  // 恢复窗口（从最小化状态）
+  restoreWindow = (id: string) => {
+    this.focusWindow(id);
+  };
+
+  // 获取活动窗口 ID
   getActiveWindowId = (): string | null => {
-    return this.state.activeWindowId;
+    const focusedWindow = this.state.windows.reduce((max, win) => 
+      win.zIndex > (max?.zIndex || 0) ? win : max, null as WindowInstance | null);
+    return focusedWindow ? focusedWindow.id : null;
   };
 
-  handleOpenFile = async (file: any) => {
-    const { windows, nextZIndex } = this.state;
-    const { getFileContent } = this.props;
-
-    if (file.type === 'folder' || file.type === 'drive' || file.type === 'root') {
-      const newWindow: WindowState = {
-        id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        appId: `folder-${file.path}`,
-        title: file.name,
-        app: { id: 'explorer', name: file.name, type: AppType.EXPLORER, iconName: file.icon || 'folder' },
-        path: file.path,
-        icon: file.icon || 'folder',
-        zIndex: nextZIndex,
-        isMinimized: false,
-        isMaximized: false,
-      };
-
-      this.setState({
-        windows: [...windows, newWindow],
-        activeWindowId: newWindow.id,
-        nextZIndex: nextZIndex + 1,
-      });
-      return;
-    }
-
-    if (file.type === 'placeholder' && file.mountable) {
-      return;
-    }
-
-    const existingWindow = windows.find(w => w.appId === 'notepad' && w.fileId === file.postId);
-    if (existingWindow) {
-      this.focusWindow(existingWindow.id);
-      return;
-    }
-
-    let content = '';
-    if (file.postId) {
-      content = getFileContentById(file.postId);
-    } else if (file.path && getFileContent) {
-      content = await getFileContent(file.path);
-    }
-
-    const newWindow: WindowState = {
-      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      appId: 'notepad',
-      fileId: file.postId || file.path,
-      title: file.name,
-      app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD, iconName: 'notepad' },
-      content: content,
-      icon: 'notepad',
-      zIndex: nextZIndex,
-      isMinimized: false,
-      isMaximized: false,
-    };
-
-    this.setState({
-      windows: [...windows, newWindow],
-      activeWindowId: newWindow.id,
-      nextZIndex: nextZIndex + 1,
-    });
-  };
-
-  handleClose = () => {
-    const { activeWindowId } = this.state;
-    if (activeWindowId) {
-      this.closeWindow(activeWindowId);
-    }
-  };
-
-  handleNewFile = (_windowId: string) => {
-    const { windows, nextZIndex } = this.state;
+  // 渲染窗口内容
+  renderWindowContent = (window: WindowInstance) => {
+    const { fileSystem, getFileContent } = this.props;
     
-    const newWindow: WindowState = {
-      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      appId: 'notepad',
-      fileId: null,
-      title: '无标题',
-      app: { id: 'notepad', name: '记事本', type: AppType.NOTEPAD, iconName: 'notepad' },
-      content: '',
-      icon: 'notepad',
-      zIndex: nextZIndex,
-      isMinimized: false,
-      isMaximized: false,
-    };
-
-    this.setState({
-      windows: [...windows, newWindow],
-      activeWindowId: newWindow.id,
-      nextZIndex: nextZIndex + 1,
-    });
-  };
-
-  handleSaveFile = (windowId: string, content: string) => {
-    const { windows } = this.state;
-    const newWindows = windows.map(w => 
-      w.id === windowId ? { ...w, content } : w
-    );
-    this.setState({ windows: newWindows });
-  };
-
-  updateWindowTitle = (windowId: string, title: string) => {
-    const { windows } = this.state;
-    const newWindows = windows.map(w => 
-      w.id === windowId ? { ...w, title } : w
-    );
-    this.setState({ windows: newWindows });
-  };
-
-  componentDidMount() {
-    const { onRef } = this.props;
-    if (onRef) {
-      onRef({
-        openWindow: this.openWindow,
-        closeWindow: this.closeWindow,
-        focusWindow: this.focusWindow,
-        restoreWindow: this.restoreWindow,
-        getWindows: this.getWindows,
-        getActiveWindowId: this.getActiveWindowId,
-      });
-    }
-  }
-
-  componentWillUnmount() {
-    const { onRef } = this.props;
-    if (onRef) {
-      onRef(null);
-    }
-  }
-
-  getWindowContent = (win: WindowState) => {
-    const { app, path, content, title, id } = win;
-    const { fileSystem } = this.props;
-
-    switch (app.type) {
-      case AppType.FOLDER:
-      case AppType.EXPLORER:
-        return (
-          <FileExplorer
-            fileSystem={fileSystem}
-            initialPath={path || '/'}
-            onOpenItem={this.handleOpenFile}
-          />
-        );
-      case AppType.NOTEPAD:
-        return (
-          <TextEditor
-            content={content || ''}
-            fileName={title || '无标题'}
-            showStatusBar={true}
-            onClose={() => this.closeWindow(id)}
-            onNew={() => this.handleNewFile(id)}
-            onSave={(newContent: string) => this.handleSaveFile(id, newContent)}
-            onOpen={() => {}}
-          />
-        );
+    switch (window.appType) {
+      case 'explorer':
+      case 'EXPLORER':
+        return <FileExplorer initialPath="/" fileSystem={fileSystem} onOpenItem={(item) => {
+          if (item.postId) {
+            // 如果是博客文章，打开文本编辑器显示内容
+            const postPath = `/my-blog/${item.postId}`;
+            console.log('Opening blog post:', postPath);
+            if (getFileContent) {
+              getFileContent(postPath).then((content) => {
+                console.log('Blog post content loaded:', content);
+                this.openBlogPost(item.name, content);
+              }).catch((err) => {
+                console.error('Failed to load blog post:', err);
+              });
+            } else {
+              console.warn('getFileContent is not available');
+            }
+          } else {
+            console.log('Item has no postId:', item);
+          }
+        }} />;
+      case 'notepad':
+      case 'NOTEPAD':
+        // 如果有postId，加载对应的文章内容
+        if (window.postId) {
+          const postPath = `/my-blog/posts/${window.postId}.md`;
+          if (getFileContent) {
+            return (
+              <TextEditor initialContent={""} />
+            );
+          }
+        }
+        return <TextEditor />;
       default:
         return <div>未知应用</div>;
     }
   };
 
+  // 打开博客文章
+  openBlogPost = (title: string, content: string) => {
+    const newPosition = this.getNextWindowPosition();
+    const newWindow: WindowInstance = {
+      id: `blog-${Date.now()}`,
+      appId: 'blog-post-' + Date.now(),
+      title: title,
+      icon: 'notepad',
+      position: newPosition,
+      size: { width: 600, height: 400 },
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: this.state.nextZIndex,
+      appType: 'NOTEPAD',
+    };
+
+    // 存储内容到临时位置或者使用其他方式传递内容
+    // 这里我们简单地更新状态，实际应用中可能需要更复杂的状态管理
+    this.setState(prevState => ({
+      windows: [...prevState.windows, newWindow],
+      nextZIndex: prevState.nextZIndex + 1,
+    }));
+  };
+
   render() {
-    const { windows, activeWindowId } = this.state;
+    const { windows } = this.state;
+    const activeWindowId = this.getActiveWindowId();
 
     return (
-      <Container onClick={() => this.focusWindow(null)}>
-        {windows.map(win => (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {windows.map(window => (
           <Window
-            key={win.id}
-            window={win}
-            isActive={activeWindowId === win.id}
-            onFocus={() => this.focusWindow(win.id)}
+            key={window.id}
+            id={window.id}
+            title={window.title}
+            isActive={activeWindowId === window.id}
+            zIndex={window.zIndex}
+            isMinimized={window.isMinimized}
+            isMaximized={window.isMaximized}
+            position={window.position}
+            size={window.size}
             onClose={this.closeWindow}
             onMinimize={this.minimizeWindow}
             onMaximize={this.maximizeWindow}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              this.focusWindow(win.id);
-            }}
+            onFocus={this.focusWindow}
           >
-            {this.getWindowContent(win)}
+            {this.renderWindowContent(window)}
           </Window>
         ))}
-      </Container>
+      </div>
     );
   }
 }
 
+// 导出 WindowManager 类以便直接引用
+export { WindowManager };
+
+// 封装Hook使用逻辑的组件（使用 forwardRef）
+interface WindowManagerWrapperProps {}
+
 export interface WindowManagerAPI {
-  openWindow: (app: any) => void;
-  closeWindow: (windowId: string) => void;
-  focusWindow: (windowId: string | null) => void;
-  restoreWindow: (windowId: string) => void;
-  getWindows: () => WindowState[];
+  openApp: (app: AppConfig, postId?: string) => void;
+  closeWindow: (id: string) => void;
+  minimizeWindow: (id: string) => void;
+  maximizeWindow: (id: string) => void;
+  focusWindow: (id: string) => void;
+  openBlogPost: (title: string, content: string) => void;
+  getWindows: () => any[];
   getActiveWindowId: () => string | null;
+  restoreWindow: (id: string) => void;
 }
 
-/**
- * 窗口管理器包装组件（使用Context）
- */
-const WindowManagerWrapper = React.forwardRef<WindowManagerAPI>((props, ref) => {
-  const fsContext = useFileSystem();
-  const [instance, setInstance] = React.useState<WindowManagerInnerInstance | null>(null);
-
-  React.useImperativeHandle(ref, () => ({
-    openWindow: (app) => instance?.openWindow(app),
-    closeWindow: (windowId) => instance?.closeWindow(windowId),
-    focusWindow: (windowId) => instance?.focusWindow(windowId),
-    restoreWindow: (windowId) => instance?.restoreWindow(windowId),
-    getWindows: () => instance?.getWindows() ?? [],
-    getActiveWindowId: () => instance?.getActiveWindowId() ?? null,
-  }));
-
-  const handleRef = React.useCallback((inst: WindowManagerInnerInstance | null) => {
-    setInstance(inst);
-  }, []);
+const WindowManagerWrapper = React.forwardRef<WindowManagerAPI, WindowManagerWrapperProps>((_, ref) => {
+  const { fileSystem, getFileContent } = useFileSystem();
   
+  // 创建内部 ref 来获取 WindowManager 实例
+  const windowManagerRef = React.useRef<WindowManager>(null);
+  
+  console.log('WindowManagerWrapper: render called, has ref:', !!ref);
+  
+  // 将 WindowManager 的方法暴露给外部
+  React.useImperativeHandle(ref, () => {
+    console.log('WindowManagerWrapper: useImperativeHandle called');
+    return {
+      openApp: (app: AppConfig, postId?: string) => {
+        windowManagerRef.current?.openApp(app, postId);
+      },
+      closeWindow: (id: string) => {
+        windowManagerRef.current?.closeWindow(id);
+      },
+      minimizeWindow: (id: string) => {
+        windowManagerRef.current?.minimizeWindow(id);
+      },
+      maximizeWindow: (id: string) => {
+        windowManagerRef.current?.maximizeWindow(id);
+      },
+      focusWindow: (id: string) => {
+        windowManagerRef.current?.focusWindow(id);
+      },
+      openBlogPost: (title: string, content: string) => {
+        windowManagerRef.current?.openBlogPost(title, content);
+      },
+      getWindows: () => {
+        return windowManagerRef.current?.state.windows || [];
+      },
+      getActiveWindowId: () => {
+        const windows = windowManagerRef.current?.state.windows || [];
+        const focusedWindow = windows.reduce((max, win) => 
+          win.zIndex > (max?.zIndex || 0) ? win : max, null as any);
+        return focusedWindow ? focusedWindow.id : null;
+      },
+      restoreWindow: (id: string) => {
+        windowManagerRef.current?.restoreWindow(id);
+      },
+    };
+  });
+
   return (
-    <WindowManagerInner
-      onRef={handleRef}
-      {...props}
-      fileSystem={fsContext.fileSystem}
-      getFileContent={fsContext.getFileContent}
+    <WindowManager
+      ref={windowManagerRef}
+      fileSystem={fileSystem}
+      getFileContent={getFileContent}
     />
   );
 });
 
 WindowManagerWrapper.displayName = 'WindowManagerWrapper';
 
-/**
- * 窗口管理器主组件
- */
-const WindowManager = React.forwardRef<WindowManagerAPI>((props, ref) => {
-  return (
-    <FSProvider>
-      <WindowManagerWrapper {...props} ref={ref} />
-    </FSProvider>
-  );
-});
-
-WindowManager.displayName = 'WindowManager';
-
-export default WindowManager;
+export default WindowManagerWrapper;

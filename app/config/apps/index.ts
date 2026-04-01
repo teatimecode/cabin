@@ -1,8 +1,59 @@
-// 应用程序配置
-// 定义桌面上的应用图标
+// 应用配置类型定义
+export interface AppConfig {
+  id: string;
+  name: string;
+  type: string;
+  icon?: string;
+  iconName?: string; // 图标名称
+  unique?: boolean; // 是否唯一实例
+  path?: string; // 可选路径
+}
 
+// 预设的应用配置
+export const PRESET_APPS: AppConfig[] = [
+  {
+    id: 'explorer',
+    name: '资源管理器',
+    type: 'explorer',
+    iconName: 'explorer',
+    unique: false,
+  },
+  {
+    id: 'notepad',
+    name: '记事本',
+    type: 'notepad',
+    iconName: 'notepad',
+    unique: false,
+  },
+  {
+    id: 'my-computer',
+    name: '我的电脑',
+    type: 'root',
+    iconName: 'my-computer',
+    unique: true,
+  },
+  {
+    id: 'blog',
+    name: '我的博客',
+    type: 'blog',
+    iconName: 'blog',
+    unique: true,
+  },
+];
+
+// 动态应用生成器
+export const useDynamicApps = (): AppConfig[] => {
+  // 基于文件系统内容动态生成应用列表
+  // 这里可以根据实际情况扩展
+  const dynamicApps: AppConfig[] = [];
+  
+  return [...PRESET_APPS, ...dynamicApps];
+};
+
+// 应用程序配置类型键
 export type AppTypeKey = 'FOLDER' | 'NOTEPAD' | 'EXPLORER' | 'BLOG';
 
+// 应用程序类型映射
 export const AppType: Record<AppTypeKey, string> = {
   FOLDER: 'folder',
   NOTEPAD: 'notepad',
@@ -10,14 +61,7 @@ export const AppType: Record<AppTypeKey, string> = {
   BLOG: 'blog',
 };
 
-export interface AppConfig {
-  id: string;
-  name: string;
-  type: string;
-  iconName: string;
-  path?: string;
-}
-
+// 桌面应用程序配置（保留向后兼容）
 const apps: AppConfig[] = [
   {
     id: 'explorer',

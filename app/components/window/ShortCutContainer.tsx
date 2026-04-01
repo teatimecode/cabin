@@ -1,54 +1,34 @@
 import React from 'react';
 import styled from 'styled-components';
 import AppIcon from '../app/AppIcon';
-import type { AppConfig } from '../../config/apps';
-
-interface ShortCutContainerProps {
-  apps: AppConfig[];
-  onOpenApp?: (app: AppConfig) => void;
-}
-
-interface ShortCutContainerState {
-  selectedAppId: string | null;
-}
+import { AppConfig } from '../../config/apps';
 
 const Container = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 8px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 8px;
+  padding: 8px;
+  height: 100%;
+  overflow: auto;
+  width: fit-content;
+  max-width: 100%;
 `;
 
-class ShortCutContainer extends React.PureComponent<ShortCutContainerProps, ShortCutContainerState> {
-  state: ShortCutContainerState = {
-    selectedAppId: null,
-  };
+interface ShortCutContainerProps {
+  apps: AppConfig[];
+  onOpenApp: (app: AppConfig) => void;
+  onContextMenu?: (app: AppConfig, x: number, y: number) => void;
+}
 
-  handleSelect = (app: AppConfig, _isMultiSelect: boolean) => {
-    this.setState({ selectedAppId: app.id });
-  };
-
-  handleOpen = (app: AppConfig) => {
-    const { onOpenApp } = this.props;
-    if (onOpenApp) {
-      onOpenApp(app);
-    }
+class ShortCutContainer extends React.PureComponent<ShortCutContainerProps> {
+  handleOpenApp = (app: AppConfig) => {
+    this.props.onOpenApp(app);
   };
 
   render() {
-    const { apps } = this.props;
-    const { selectedAppId } = this.state;
-
-    if (!apps || apps.length === 0) {
-      return <Container />;
-    }
+    const { apps, onContextMenu } = this.props;
 
     return (
       <Container>
@@ -56,9 +36,8 @@ class ShortCutContainer extends React.PureComponent<ShortCutContainerProps, Shor
           <AppIcon
             key={app.id}
             app={app}
-            selected={selectedAppId === app.id}
-            onSelect={this.handleSelect}
-            onOpen={this.handleOpen}
+            onOpen={this.handleOpenApp}
+            onContextMenu={onContextMenu}
           />
         ))}
       </Container>

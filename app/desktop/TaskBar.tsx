@@ -1,76 +1,24 @@
+"use client";
+
 import React from 'react';
-import styled from 'styled-components';
-import {
-  AppBar, Toolbar, Button, MenuList, MenuListItem, Separator
-} from 'react95';
-import { ScrollView } from 'react95';
+import { Button, List } from '@react95/core';
 import { getIcon } from '../components/icons';
-import type { WindowState } from '../components/window/Window';
+import type { WindowInstance } from '../components/window/WindowManager';
 import type { WindowManagerAPI } from '../components/window/WindowManager';
-
-const MenuWrapper = styled.div`
-  position: relative;
-`;
-
-const DropdownMenu = styled(MenuList)`
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  min-width: 180px;
-  margin-bottom: 2px;
-`;
-
-const StartButton = styled(Button)`
-  font-weight: bold;
-  font-size: 12px;
-  padding: 0 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const WindowButton = styled(Button)`
-  font-size: 11px;
-  padding: 0 8px;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const WindowButtonsContainer = styled.div`
-  display: flex;
-  flex: 1;
-  margin-left: 4px;
-  gap: 2px;
-  overflow: hidden;
-`;
-
-const ClockArea = styled(ScrollView)`
-  padding: 2px 8px;
-  background: #c0c0c0;
-  font-size: 11px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
-`;
-
-const DividerLine = styled.div`
-  width: 2px;
-  height: 22px;
-  background: linear-gradient(to right, #808080, #fff);
-  margin: 0 4px;
-`;
+import styles from './TaskBar.module.css';
 
 /*
   开始菜单
 */
+interface StartMenuProps {
+  windowManager?: WindowManagerAPI | null;
+}
+
 interface StartMenuState {
   open: boolean;
 }
 
-class StartMenu extends React.PureComponent<Record<string, never>, StartMenuState> {
+class StartMenu extends React.PureComponent<StartMenuProps, StartMenuState> {
   state: StartMenuState = {
     open: false
   };
@@ -83,51 +31,93 @@ class StartMenu extends React.PureComponent<Record<string, never>, StartMenuStat
     this.setState({ open: false });
   };
 
+  handleMenuClick = (action: string) => {
+    const { windowManager } = this.props;
+    this.handleClose();
+    
+    if (!windowManager) return;
+    
+    switch(action) {
+      case 'programs':
+        windowManager.openApp({ 
+          id: 'explorer', 
+          name: '程序', 
+          type: 'explorer',
+          iconName: 'folder'
+        });
+        break;
+      case 'documents':
+        windowManager.openApp({ 
+          id: 'notepad', 
+          name: '文档', 
+          type: 'notepad',
+          iconName: 'document'
+        });
+        break;
+      case 'settings':
+        windowManager.openApp({ 
+          id: 'explorer', 
+          name: '设置', 
+          type: 'explorer',
+          iconName: 'settings'
+        });
+        break;
+      case 'help':
+        windowManager.openApp({ 
+          id: 'notepad', 
+          name: '帮助', 
+          type: 'notepad',
+          iconName: 'help'
+        });
+        break;
+      case 'shutdown':
+        if (window.confirm('确定要关机吗？')) {
+          alert('感谢使用 TeaTimeCode Cabin！\n\n（实际关机功能需要浏览器扩展支持）');
+        }
+        break;
+    }
+  };
+
   render() {
     const { open } = this.state;
+    const { windowManager } = this.props;
 
     return (
-      <MenuWrapper>
-        <StartButton 
-          onClick={this.handleClick} 
-          active={open ? true : undefined}
+      <div className={styles.menuWrapper}>
+        <Button 
+          className={`${styles.startButton} ${open ? styles.startButtonActive : ''}`}
+          onClick={this.handleClick}
         >
-          {getIcon('windows', { size: 'medium' })}
+          {getIcon('user1', { size: 'medium' })}
           开始
-        </StartButton>
+        </Button>
         {open && (
-          <DropdownMenu onClick={this.handleClose}>
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('startup')}</span>
+          <List className={styles.dropdownMenu}>
+            <List.Item icon={getIcon('folder', { size: 'medium' })} onClick={() => this.handleMenuClick('programs')}>
               程序
-            </MenuListItem>
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('documents')}</span>
+            </List.Item>
+            <List.Item icon={getIcon('document', { size: 'medium' })} onClick={() => this.handleMenuClick('documents')}>
               文档
-            </MenuListItem>
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('settings')}</span>
+            </List.Item>
+            <List.Item icon={getIcon('notepad', { size: 'medium' })} onClick={() => this.handleMenuClick('settings')}>
               设置
-            </MenuListItem>
-            <Separator />
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
+            </List.Item>
+            <List.Divider />
+            <List.Item icon={getIcon('help', { size: 'medium' })} onClick={() => this.handleMenuClick('help')}>
               帮助
-            </MenuListItem>
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('help')}</span>
+            </List.Item>
+            <List.Item icon={getIcon('help', { size: 'medium' })}>
               <a href="https://react95.github.io/React95/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
                 React95 官方文档
               </a>
-            </MenuListItem>
-            <Separator />
-            <MenuListItem>
-              <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>{getIcon('shutdown')}</span>
+            </List.Item>
+            <List.Divider />
+            <List.Item icon={getIcon('drive', { size: 'medium' })} onClick={() => this.handleMenuClick('shutdown')}>
               关机
-            </MenuListItem>
-          </DropdownMenu>
+            </List.Item>
+          </List>
         )}
-      </MenuWrapper>
+      </div>
     );
   }
 }
@@ -137,16 +127,21 @@ class StartMenu extends React.PureComponent<Record<string, never>, StartMenuStat
 */
 interface ClockState {
   time: Date;
+  isMounted: boolean;
 }
 
 class Clock extends React.PureComponent<Record<string, never>, ClockState> {
   timer: ReturnType<typeof setInterval> | null = null;
 
   state: ClockState = {
-    time: new Date()
+    time: new Date(),
+    isMounted: false
   };
 
   componentDidMount() {
+    // 标记组件已挂载，避免水合错误
+    this.setState({ isMounted: true });
+    
     this.timer = setInterval(() => {
       this.setState({ time: new Date() });
     }, 1000);
@@ -157,14 +152,24 @@ class Clock extends React.PureComponent<Record<string, never>, ClockState> {
   }
 
   render() {
-    const { time } = this.state;
+    const { time, isMounted } = this.state;
+    
+    // 服务端渲染时显示占位符，避免水合错误
+    if (!isMounted) {
+      return (
+        <div className={styles.clock}>
+          --:--
+        </div>
+      );
+    }
+    
     const hours = time.getHours().toString().padStart(2, '0');
     const minutes = time.getMinutes().toString().padStart(2, '0');
     
     return (
-      <ClockArea shadow={false}>
+      <div className={styles.clock}>
         {hours}:{minutes}
-      </ClockArea>
+      </div>
     );
   }
 }
@@ -173,12 +178,11 @@ class Clock extends React.PureComponent<Record<string, never>, ClockState> {
   任务栏
 */
 interface TaskBarProps {
-  config: any;
   windowManager: WindowManagerAPI | null;
 }
 
 interface TaskBarState {
-  windows: WindowState[];
+  windows: WindowInstance[];
   activeWindowId: string | null;
 }
 
@@ -207,7 +211,7 @@ class TaskBar extends React.PureComponent<TaskBarProps, TaskBarState> {
     }
   }
 
-  handleWindowClick = (win: WindowState) => {
+  handleWindowClick = (win: WindowInstance) => {
     const { windowManager } = this.props;
     if (windowManager) {
       if (win.isMinimized) {
@@ -220,33 +224,34 @@ class TaskBar extends React.PureComponent<TaskBarProps, TaskBarState> {
 
   render() {
     const { windows, activeWindowId } = this.state;
+    const { windowManager } = this.props;
 
     return (
-      <AppBar position="fixed" style={{ bottom: 0, top: 'auto', width: '100%' }}>
-        <Toolbar style={{ justifyContent: 'space-between', padding: '2px 4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-            <StartMenu />
-            <WindowButtonsContainer>
+      <footer className={styles.taskbar}>
+        <div className={styles.toolbar}>
+          <div className={styles.leftSection}>
+            <StartMenu windowManager={windowManager} />
+            <div className={styles.windowButtonsContainer}>
               {windows.map(win => (
-                <WindowButton
+                <Button
                   key={win.id}
-                  active={activeWindowId === win.id && !win.isMinimized ? true : undefined}
+                  className={`${styles.windowButton} ${activeWindowId === win.id && !win.isMinimized ? styles.windowButtonActive : ''}`}
                   onClick={() => this.handleWindowClick(win)}
                 >
-                  {getIcon(win.icon || 'folder', { size: 'small' })}
+                  {getIcon((win.icon || 'folder') as import('../components/icons').IconName, { size: 'small' })}
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {win.title}
                   </span>
-                </WindowButton>
+                </Button>
               ))}
-            </WindowButtonsContainer>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <DividerLine />
+          <div className={styles.rightSection}>
+            <div className={styles.dividerLine} />
             <Clock />
           </div>
-        </Toolbar>
-      </AppBar>
+        </div>
+      </footer>
     );
   }
 }

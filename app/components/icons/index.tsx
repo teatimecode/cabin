@@ -1,122 +1,194 @@
-import React, { CSSProperties } from 'react';
-// 导入 React95 官方图标
-import '@react95/icons/icons.css';
-import {
+/**
+ * 图标组件库 - 基于 @react95/icons
+ * 
+ * 提供统一的图标接口和尺寸管理
+ * 所有图标均来自 @react95/icons 包，确保 Windows 95 风格一致性
+ */
+
+import React from 'react';
+import styled from 'styled-components';
+
+// 从 @react95/icons 导入真实图标组件
+// 注意：@react95/icons v2.2.0 导出的是命名导出
+import { 
   Computer,
   Folder,
   FolderOpen,
+  FileText as Document,
   Notepad,
+  Explorer100 as Explorer,
+  Help,
+  Settings,
+  PowerOff as Shutdown,
+  Close,
+  ArrowLeft,
+  Back,
+  ReaderDisket as Drive,
+  CdExe as DriveRemovable,
   RecycleEmpty,
   RecycleFull,
-  Settings,
-  Help,
-  Explorer100,
-  User,
   User1,
-  FileText,
-  Brush,
-  Logo,
-  Shell32136,
 } from '@react95/icons';
 
-/**
- * Windows 95 风格图标组件
- * 使用 @react95/icons 官方图标库
- */
+// 定义可用的图标名称类型
+export type IconName = 
+  | 'close'
+  | 'arrow-left'
+  | 'back'
+  | 'folder'
+  | 'folder-open'
+  | 'my-computer'
+  | 'notepad'
+  | 'document'
+  | 'explorer'
+  | 'help'
+  | 'settings'
+  | 'drive'
+  | 'drive-removable'
+  | 'minimize'
+  | 'restore'
+  | 'maximize'
+  | 'startup'
+  | 'shutdown'
+  | 'blog'
+  | 'picture'
+  | 'recycle-bin'
+  | 'recycle-empty'
+  | 'recycle-full'
+  | 'removable'
+  | 'user1';
 
-type IconSize = 'large' | 'medium' | 'small';
+// 定义图标尺寸类型
+export type IconSize = 'small' | 'medium' | 'large';
 
-interface SvgIconProps {
-  size?: number;
-  style?: CSSProperties;
-}
-
-// 窗口控制按钮图标
-export const MinimizeIcon = ({ size = 10, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 10 10" style={style}>
-    <rect x="1" y="8" width="8" height="1" fill="currentColor" />
-  </svg>
-);
-
-export const MaximizeIcon = ({ size = 10, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 10 10" style={style}>
-    <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1" />
-  </svg>
-);
-
-export const RestoreIcon = ({ size = 10, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 10 10" style={style}>
-    <rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" strokeWidth="1" />
-    <rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" strokeWidth="1" />
-  </svg>
-);
-
-export const CloseIcon = ({ size = 10, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 10 10" style={style}>
-    <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="1.5" />
-    <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth="1.5" />
-  </svg>
-);
-
-export const UpArrowIcon = ({ size = 12, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 12 12" style={style}>
-    <polygon points="6,2 10,7 2,7" fill="currentColor" />
-  </svg>
-);
-
-export const LeftArrowIcon = ({ size = 12, style = {} }: SvgIconProps) => (
-  <svg width={size} height={size} viewBox="0 0 12 12" style={style}>
-    <polygon points="2,6 7,2 7,10" fill="currentColor" />
-  </svg>
-);
-
-// 图标映射
-export const IconMap: Record<string, React.ComponentType<any>> = {
-  'my-computer': Computer,
-  'folder': Folder,
-  'folder-open': FolderOpen,
-  'document': FileText,
-  'notepad': Notepad,
-  'picture': Brush,
-  'recycle-bin': RecycleEmpty,
-  'recycle-bin-full': RecycleFull,
-  'explorer': Explorer100,
-  'user': User,
-  'windows': User1,
-  'logo': Logo,
-  'startup': Explorer100,
-  'documents': FileText,
-  'settings': Settings,
-  'help': Help,
-  'shutdown': Shell32136,
+// 尺寸映射到像素值
+const sizeMap: Record<IconSize, number> = {
+  small: 16,
+  medium: 24,
+  large: 32,
 };
 
-interface GetIconProps {
+// 根据尺寸选择 variant
+const getVariant = (size: IconSize): '16x16_4' | '32x32_4' => {
+  return size === 'small' ? '16x16_4' : '32x32_4';
+};
+
+// 图标容器样式
+const StyledIconContainer = styled.div<{ size: IconSize }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${props => sizeMap[props.size]}px;
+  height: ${props => sizeMap[props.size]}px;
+  
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+
+interface GetIconOptions {
   size?: IconSize;
-  [key: string]: any;
+  style?: React.CSSProperties;
 }
 
-// 获取图标组件
-export function getIcon(iconName: string, props: GetIconProps = {}): React.ReactElement {
-  const IconComponent = IconMap[iconName];
+/**
+ * 获取指定名称的图标组件
+ * @param name 图标名称
+ * @param options 图标选项（尺寸、样式等）
+ * @returns React 图标组件
+ */
+export function getIcon(name: IconName, options?: GetIconOptions) {
+  const size = options?.size || 'medium';
+  const style = options?.style || {};
+  const variant = getVariant(size);
 
-  let variant: '32x32_4' | '22x22_4' | '16x16_4';
-  if (props.size === 'large') {
-    variant = '32x32_4';
-  } else if (props.size === 'medium') {
-    variant = '22x22_4';
-  } else {
-    variant = '16x16_4';
-  }
-  const { size, ...restProps } = props;
+  // 图标渲染函数映射 - 根据各图标支持的 variant 分别处理
+  const iconRenderers: Record<IconName, () => React.ReactNode> = {
+    'close': () => <Close variant="16x16_4" />,
+    'arrow-left': () => <ArrowLeft variant="32x32_4" />, // ArrowLeft 只支持 32x32_4
+    'back': () => <Back variant="16x16_4" />, // Back 只支持 16x16_4
+    'folder': () => <Folder {...{ variant }} />,
+    'folder-open': () => <FolderOpen {...{ variant }} />,
+    'my-computer': () => <Computer {...{ variant }} />,
+    'notepad': () => <Notepad {...{ variant }} />,
+    'document': () => <Document {...{ variant }} />,
+    'explorer': () => <Explorer {...{ variant }} />,
+    'help': () => <Help variant="16x16_4" />, // Help 只支持 16x16_4
+    'settings': () => <Settings {...{ variant }} />,
+    'drive': () => <Drive {...{ variant }} />,
+    'drive-removable': () => <DriveRemovable variant="32x32_4" />, // DriveRemovable 只支持 32x32_4
+    'minimize': () => <span style={{ fontSize: `${sizeMap[size] * 0.6}px`, fontWeight: 'bold' }}>−</span>,
+    'restore': () => <span style={{ fontSize: `${sizeMap[size] * 0.6}px` }}>❐</span>,
+    'maximize': () => <span style={{ fontSize: `${sizeMap[size] * 0.6}px` }}>□</span>,
+    'startup': () => <Folder {...{ variant }} />,
+    'shutdown': () => <Shutdown {...{ variant }} />,
+    'blog': () => <Document {...{ variant }} />,
+    'picture': () => <Folder {...{ variant }} />, // 使用 folder 图标代替
+    'recycle-bin': () => <RecycleEmpty {...{ variant }} />, // 默认使用空回收站
+    'recycle-empty': () => <RecycleEmpty {...{ variant }} />,
+    'recycle-full': () => <RecycleFull {...{ variant }} />,
+    'removable': () => <DriveRemovable variant="32x32_4" />,
+    'user1': () => <User1 {...{ variant }} />,
+  };
 
-  if (IconComponent) {
-    // @ts-ignore - react95 icons have different variant types
-    return <IconComponent variant={variant} {...restProps} />;
+  const IconRenderer = iconRenderers[name];
+  
+  if (!IconRenderer) {
+    // 如果图标不存在，回退到 document 图标
+    // eslint-disable-next-line no-console
+    console.warn(`Icon "${name}" not found, falling back to document icon`);
+    return (
+      <StyledIconContainer size={size} style={style}>
+        <Document {...{ variant }} />
+      </StyledIconContainer>
+    );
   }
-  // 默认返回 FileText，但只支持 large 和 small
-  const defaultVariant = variant === '22x22_4' ? '32x32_4' : variant;
-  return <FileText variant={defaultVariant} {...restProps} />;
+
+  return (
+    <StyledIconContainer size={size} style={style}>
+      {IconRenderer()}
+    </StyledIconContainer>
+  );
 }
 
-export default IconMap;
+// 导出原始图标组件供直接使用
+export {
+  Computer,
+  Folder,
+  FolderOpen,
+  Document,
+  Notepad,
+  Explorer,
+  Help,
+  Settings,
+  Shutdown,
+  Close,
+  ArrowLeft,
+  Back,
+  Drive,
+  DriveRemovable,
+};
+
+// 使用 SVG 创建向上箭头图标
+export const UpArrow: React.FC<{ variant?: '16x16_4' | '32x32_4' }> = ({ variant = '16x16_4' }) => (
+  <svg width={variant === '16x16_4' ? 16 : 32} height={variant === '16x16_4' ? 16 : 32} viewBox="0 0 32 32" shapeRendering="crispEdges">
+    <path fill="#000" d="M16 2L8 12h5v8h6v-8h5L16 2z"/>
+    <path fill="#fff" d="M16 4l6 7h-4v8h-4v-8H10l6-7z"/>
+  </svg>
+);
+
+// 使用 SVG 创建向左箭头图标  
+export const LeftArrow: React.FC<{ variant?: '16x16_4' | '32x32_4' }> = ({ variant = '16x16_4' }) => (
+  <svg width={variant === '16x16_4' ? 16 : 32} height={variant === '16x16_4' ? 16 : 32} viewBox="0 0 32 32" shapeRendering="crispEdges">
+    <path fill="#000" d="M14 8L4 16l10 8v-5h14v-6H14V8z"/>
+    <path fill="#fff" d="M12 10l-6 6 6 6v-4h14v-4H12v-4z"/>
+  </svg>
+);
+
+// 导出尺寸常量
+export const IconSizes = {
+  SMALL: 'small' as IconSize,
+  MEDIUM: 'medium' as IconSize,
+  LARGE: 'large' as IconSize,
+};

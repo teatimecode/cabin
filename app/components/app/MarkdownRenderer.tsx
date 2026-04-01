@@ -253,15 +253,16 @@ const InlineText: React.FC<{ parts: InlinePart[] }> = ({ parts }) => {
   return (
     <>
       {parts.map((part, index) => {
+        const key = `inline-part-${index}-${part.type}`;
         switch (part.type) {
           case 'code':
-            return <code key={index}>{part.content}</code>;
+            return <code key={key}>{part.content}</code>;
           case 'bold':
-            return <strong key={index}>{part.content}</strong>;
+            return <strong key={key}>{part.content}</strong>;
           case 'italic':
-            return <em key={index}>{part.content}</em>;
+            return <em key={key}>{part.content}</em>;
           default:
-            return <span key={index}>{part.content}</span>;
+            return <span key={key}>{part.content}</span>;
         }
       })}
     </>
@@ -278,39 +279,45 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   return (
     <MarkdownContent>
       {elements.map((el, index) => {
+        const elKey = `element-${index}-${el.type}`;
         switch (el.type) {
           case 'h1':
-            return <h1 key={index}><InlineText parts={parseInline(el.content || '')} /></h1>;
+            return <h1 key={elKey}><InlineText parts={parseInline(el.content || '')} /></h1>;
           case 'h2':
-            return <h2 key={index}><InlineText parts={parseInline(el.content || '')} /></h2>;
+            return <h2 key={elKey}><InlineText parts={parseInline(el.content || '')} /></h2>;
           case 'h3':
-            return <h3 key={index}><InlineText parts={parseInline(el.content || '')} /></h3>;
+            return <h3 key={elKey}><InlineText parts={parseInline(el.content || '')} /></h3>;
           case 'p':
-            return <p key={index}><InlineText parts={parseInline(el.content || '')} /></p>;
+            return <p key={elKey}><InlineText parts={parseInline(el.content || '')} /></p>;
           case 'ul':
             return (
-              <ul key={index}>
-                {(el.items || []).map((item, i) => (
-                  <li key={i}><InlineText parts={parseInline(item.content)} /></li>
-                ))}
+              <ul key={elKey}>
+                {(el.items || []).map((item, i) => {
+                  const itemKey = `${el.type}-${index}-item-${i}`;
+                  return (
+                    <li key={itemKey}>
+                      <InlineText parts={parseInline(item.content)} />
+                    </li>
+                  );
+                })}
               </ul>
             );
           case 'li':
-            return <li key={index}><InlineText parts={parseInline(el.content || '')} /></li>;
+            return <li key={elKey}><InlineText parts={parseInline(el.content || '')} /></li>;
           case 'blockquote':
-            return <blockquote key={index}><InlineText parts={parseInline(el.content || '')} /></blockquote>;
+            return <blockquote key={elKey}><InlineText parts={parseInline(el.content || '')} /></blockquote>;
           case 'codeblock':
             return (
-              <pre key={index}>
+              <pre key={elKey}>
                 <code>{el.content}</code>
               </pre>
             );
           case 'hr':
-            return <hr key={index} />;
+            return <hr key={elKey} />;
           case 'task':
             return (
-              <div key={index} style={{ margin: '4px 0' }}>
-                <input type="checkbox" checked={el.checked} readOnly />
+              <div key={elKey} style={{ margin: '4px 0' }}>
+                <input type="checkbox" checked={!!el.checked} readOnly />
                 <InlineText parts={parseInline(el.content || '')} />
               </div>
             );

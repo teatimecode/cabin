@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getIcon } from '../icons';
+import { getIcon, type IconName } from '../icons';
 import type { AppConfig } from '../../config/apps';
 
 interface AppIconProps {
@@ -8,6 +8,7 @@ interface AppIconProps {
   selected?: boolean;
   onOpen?: (app: AppConfig) => void;
   onSelect?: (app: AppConfig, isMultiSelect: boolean) => void;
+  onContextMenu?: (app: AppConfig, x: number, y: number) => void;
 }
 
 const IconWrapper = styled.div`
@@ -53,15 +54,28 @@ const IconLabel = styled.span<{ selected?: boolean }>`
 class AppIcon extends React.PureComponent<AppIconProps> {
   handleDoubleClick = () => {
     const { app, onOpen } = this.props;
+    console.log('AppIcon: Double clicked on', app.name);
     if (onOpen) {
+      console.log('AppIcon: Calling onOpen for', app.name);
       onOpen(app);
+    } else {
+      console.log('AppIcon: onOpen is not defined');
     }
   };
 
   handleClick = (e: React.MouseEvent) => {
     const { app, onSelect } = this.props;
     if (onSelect) {
-      onSelect(app, e.ctrlKey);
+      onSelect(app, e.ctrlKey || e.metaKey);
+    }
+  };
+
+  handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { app, onContextMenu } = this.props;
+    if (onContextMenu) {
+      onContextMenu(app, e.clientX, e.clientY);
     }
   };
 
@@ -72,7 +86,7 @@ class AppIcon extends React.PureComponent<AppIconProps> {
     // 桌面图标使用大尺寸 (32x32)
     const renderIcon = () => {
       if (app.iconName) {
-        return getIcon(app.iconName, { size: 'large' });
+        return getIcon(app.iconName as IconName, { size: 'large' });
       }
       
       // 根据应用类型返回默认图标
@@ -107,6 +121,7 @@ class AppIcon extends React.PureComponent<AppIconProps> {
       <IconWrapper
         onClick={this.handleClick}
         onDoubleClick={this.handleDoubleClick}
+        onContextMenu={this.handleContextMenu}
       >
         <IconImage>{renderIcon()}</IconImage>
         <IconLabel selected={selected}>{app.name}</IconLabel>
